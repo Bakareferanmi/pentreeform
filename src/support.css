@@ -1,0 +1,7 @@
+/* Operational states not present in the supplied dashboard reference. */
+.loading{min-height:100vh;max-width:650px;margin:auto;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:25px;text-align:center;gap:15px}
+.loading .logo svg{width:28px;height:32px}
+.live-banner{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);z-index:120;display:flex;align-items:center;gap:15px;background:var(--ink);color:#fff;padding:14px 16px;border-radius:14px;box-shadow:0 14px 40px rgba(28,15,51,.35);max-width:calc(100% - 30px)}
+.live-banner button{color:#c9b8e6;text-decoration:underline;white-space:nowrap}
+.challenge{margin:18px 0;min-height:65px}
+.amsg.err{background:var(--red-bg);color:var(--red);border:1px solid #e0b4bc}

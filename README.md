@@ -1,6 +1,8 @@
 # Pentreeform
 
-A purple React dashboard and Cloudflare Workers backend for a public form submission service.
+A React application and Cloudflare Workers backend for a public form submission service.
+
+The UI is imported from the supplied `design/Pentreeform_Redesign.html`. Its CSS is preserved exactly in `src/styles.css`; `src/redesign.js` keeps the reference markup and demo interactions, with a live-data adapter. Account screens use the same reference classes. Backend, session, email, billing, and demo entry-point behaviour are retained. A parity check compares all seven dashboard pages and six account previews against the original HTML.
 
 ## Current implementation
 
