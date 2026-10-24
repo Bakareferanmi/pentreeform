@@ -1,6 +1,6 @@
 const assert=require('node:assert/strict');const {JSDOM}=require('jsdom');const {buildSync}=require('esbuild');const fs=require('node:fs');const path=require('node:path');const os=require('node:os');const output=path.join(os.tmpdir(),'pentreeform-live-'+process.pid+'.cjs');
 buildSync({entryPoints:['src/LiveRoot.jsx'],bundle:true,platform:'node',format:'cjs',external:['react','react-dom'],outfile:output});
-const dom=new JSDOM('<div id="root"></div>',{url:'https://app.test'});global.window=dom.window;global.document=dom.window.document;global.history=dom.window.history;global.localStorage=dom.window.localStorage;global.FormData=dom.window.FormData;global.IS_REACT_ACT_ENVIRONMENT=true;
+const dom=new JSDOM('<div id="root"></div>',{url:'https://app.test/app'});global.window=dom.window;global.document=dom.window.document;global.history=dom.window.history;global.localStorage=dom.window.localStorage;global.FormData=dom.window.FormData;global.IS_REACT_ACT_ENVIRONMENT=true;
 const Module=require('node:module'),resolve=Module._resolveFilename;Module._resolveFilename=function(request,parent,...rest){if(parent?.filename===output&&(request==='react'||request.startsWith('react/')))return require.resolve(request);return resolve.call(this,request,parent,...rest)};
 const React=require('react'),{act}=React,{createRoot}=require('react-dom/client'),LiveRoot=require(output).default;
 const user={id:'owner',name:'Real Owner',workspace:'Private workspace',email:'client@example.com',verified:true,plan:'Free'};const requests=[];let signedIn=false;

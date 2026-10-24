@@ -6,7 +6,7 @@ const cookieName='pentree_google';
 function flowCookie(value,env,clear=false){return `${cookieName}=${value}; Path=/api/auth/google; HttpOnly; SameSite=Lax; Max-Age=${clear?0:600}${origin(env).startsWith('https:')?'; Secure':''}`}
 function browserToken(req){return (req.headers.get('cookie')||'').split(';').map(s=>s.trim()).find(s=>s.startsWith(cookieName+'='))?.slice(cookieName.length+1)||''}
 function callbackURL(env){return origin(env)+'/api/auth/google/callback'}
-function redirect(env,error,sessionCookie){const headers=new Headers({Location:origin(env)+(error?'/#auth_error='+error:'/'),'Cache-Control':'no-store'});if(sessionCookie)headers.append('Set-Cookie',sessionCookie);headers.append('Set-Cookie',flowCookie('',env,true));return new Response(null,{status:303,headers})}
+function redirect(env,error,sessionCookie){const headers=new Headers({Location:origin(env)+(error?'/app#auth_error='+error:'/app'),'Cache-Control':'no-store'});if(sessionCookie)headers.append('Set-Cookie',sessionCookie);headers.append('Set-Cookie',flowCookie('',env,true));return new Response(null,{status:303,headers})}
 export async function googleRoute(req,env,path,verificationStatements){
  if(path==='/api/auth/google/start'&&req.method==='POST'){
  if(!googleConfigured(env))fail(503,'Google sign-in is not configured yet.');
