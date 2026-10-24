@@ -66,3 +66,28 @@
 .screen-switcher~.shell .side{top:0;height:100vh}
 .screen-switcher~.shell .top{top:0}
 .screen-switcher~.auth{min-height:100vh}
+
+/* Account actions stay visible without opening the sidebar. */
+.account-actions{display:flex;align-items:center;gap:8px;flex-shrink:0}
+.account-actions button{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;padding:7px 13px;border:1px solid #a994c2;border-radius:11px;background:#fff;color:#352449;font-size:14px;font-weight:700;white-space:nowrap}
+.account-actions button:hover{background:#eee3fc;border-color:#805ba5}
+.account-avatar{display:grid;place-items:center;width:28px;height:28px;border-radius:9px;background:#eaddfa;color:#4e139f;font-size:11px;letter-spacing:.02em}
+.account-signout{color:#6b3140!important}
+.profile-identity{display:flex;align-items:center;gap:14px;padding:16px;margin-bottom:20px;border:1px solid #d3c2e5;border-radius:14px;background:#f6f0fc}
+.profile-identity>.av{width:48px;height:48px;font-size:18px;flex-shrink:0}
+.profile-identity>div{min-width:0;display:flex;flex-direction:column;gap:3px}
+.profile-identity strong{font-size:18px;color:var(--ink)}
+.profile-identity div>span{font-size:14px;color:#5c486b;overflow-wrap:anywhere}
+.profile-links{display:grid;grid-template-columns:1fr 1fr;gap:10px;border-top:1px solid #d3c2e5;padding-top:20px;margin-top:24px}
+.profile-links .btn{font-size:14px;padding:12px 10px}
+.modal-actions{display:flex;justify-content:flex-end;gap:12px;margin-top:24px}
+.modal-actions .btn{min-width:110px}
+@media(max-width:600px){
+ .top{padding:8px 12px;min-height:64px;height:auto;gap:8px}
+ .top>.crumb,.top>.live,.top>[aria-label="Open documentation"]{display:none}
+ .top>.burger{min-width:44px;min-height:44px}
+ .account-actions button{padding:7px 11px;font-size:14px}
+ .profile-links{grid-template-columns:1fr}
+ .modal-actions .btn{flex:1;min-width:0}
+ .screen-switcher~.shell .scrim{inset:0}
+}
