@@ -1,3 +1,44 @@
 {
-  "rewrites": [{"source": "/demo", "destination": "/index.html"}, {"source": "/demo/", "destination": "/index.html"}]
+  "rewrites": [
+    {
+      "source": "/demo",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/demo/",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/app",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/app/",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/privacy",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/privacy/",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/terms",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/terms/",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/support",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/support/",
+      "destination": "/index.html"
+    }
+  ]
 }

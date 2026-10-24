@@ -1,6 +1,7 @@
 import React,{useState,useEffect,useRef,useCallback} from 'react';
 import App from './App.jsx';
 import Landing from './Landing.jsx';
+import PublicPage,{publicPageAt} from './PublicPages.jsx';
 import {BRAND_ICON} from './brand.js';
 import {GOOGLE_ICON} from './google-brand.js';
 import {ShieldCheck} from 'lucide-react';
@@ -41,6 +42,8 @@ function WorkspaceRoot(){const [demo,setDemo]=useState(()=>isDemoLocation(window
 export function isLandingLocation(location){return /^\/$/.test(location.pathname)&&!isDemoLocation(location)&&!/^#(verify|reset|auth_error)=/.test(location.hash)&&!new URLSearchParams(location.search).has('auth')&&new URLSearchParams(location.search).get('billing')!=='return'}
 export default function LiveRoot(){
  const [landing,setLanding]=useState(()=>isLandingLocation(window.location));
+ const publicPage=publicPageAt(window.location.pathname);
+ if(publicPage)return <PublicPage page={publicPage}/>;
  if(landing)return <Landing onDemo={()=>{const url=new URL(window.location.href);url.searchParams.delete('demo');url.searchParams.set('view','workspace');url.hash='';history.replaceState({},'',url.pathname+url.search);setLanding(false)}}/>;
  return <WorkspaceRoot/>;
 }

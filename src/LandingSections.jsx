@@ -1,0 +1,18 @@
+import React,{useRef,useState} from 'react';
+import {Copy,Check} from 'lucide-react';
+
+const endpoint='https://your-host.example/f/YOUR_FORM_ID';
+const before='<script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>\n<form action="';
+const after='" method="POST">\n  <input type="email" name="email" placeholder="Your email" required />\n  <textarea name="message" placeholder="Your message" required></textarea>\n  <div class="cf-turnstile" data-sitekey="YOUR_SITE_KEY" data-action="submission"></div>\n  <button type="submit">Send message</button>\n</form>';
+export const SETUP_CODE=before+endpoint+after;
+export const FAQS=[
+ ['Can I keep my existing form?','Yes. Keep your design, point its action to your Pentreeform endpoint, and add the security widget. Use named fields and submit from the HTTPS website you registered.'],
+ ['What happens if an email notification fails?','Your saved submission stays in your inbox for your plan’s retention period. Temporary sending failures are retried automatically, up to five attempts. Bounces and permanent failures need attention; check the notification status in your inbox.'],
+ ['What happens when I reach my monthly limit?','New submissions are rejected and are not saved. Your limit is shared across all your forms and resets at the start of each calendar month in UTC. Upgrade for more room, and ask the visitor to submit again after capacity is available.']
+];
+export function SetupGuide(){
+ const [feedback,setFeedback]=useState(''),[copied,setCopied]=useState(false),code=useRef(null);
+ async function copy(){try{await navigator.clipboard.writeText(SETUP_CODE);setCopied(true);setFeedback('Code copied. Replace the endpoint and site key before publishing.')}catch{const selection=window.getSelection(),range=document.createRange();range.selectNodeContents(code.current);selection.removeAllRanges();selection.addRange(range);setCopied(false);setFeedback('Code selected. Use your device’s copy command.')}}
+ return <section className="pf-setup" id="setup" aria-labelledby="pf-setup-title"><div className="pf-section-heading"><h2 id="pf-setup-title">Your form. Connected.</h2><p>Create a form. Copy your endpoint. Add it below.</p></div><div className="pf-code-card"><div className="pf-code-toolbar"><span>HTML</span><button onClick={copy} aria-label="Copy setup code">{copied?<Check size={18}/>:<Copy size={18}/>}<span>{copied?'Copied':'Copy code'}</span></button></div><pre tabIndex="0" aria-label="HTML form setup example"><code ref={code}>{before}<mark>{endpoint}</mark>{after}</code></pre></div><p className="pf-setup-note">Replace the endpoint and site key. Register your website’s HTTPS hostname in your form and Turnstile settings.</p><p className="pf-copy-feedback" role="status">{feedback}</p></section>
+}
+export function LandingFAQ(){return <section className="pf-faq" aria-labelledby="pf-faq-title"><div className="pf-section-heading"><h2 id="pf-faq-title">A few quick answers.</h2></div><div className="pf-faq-list">{FAQS.map(([question,answer])=><details key={question}><summary>{question}<span aria-hidden="true" className="pf-faq-toggle"/></summary><p>{answer}</p></details>)}</div></section>}

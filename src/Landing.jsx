@@ -1,6 +1,8 @@
 import React,{useState,useEffect} from 'react';
 import {Plus,Mail,Check,Inbox,FileText,X,Menu} from 'lucide-react';
 import {BRAND_ICON} from './brand.js';
+import {SetupGuide,LandingFAQ} from './LandingSections.jsx';
+import {PublicFooter} from './PublicPages.jsx';
 
 export default function Landing({onDemo}){
  const [activeMessage,setActiveMessage]=useState(null),[manualSent,setManualSent]=useState(false),[menu,setMenu]=useState(false),[step,setStep]=useState(0),[motion,setMotion]=useState(()=>!window.matchMedia?.('(prefers-reduced-motion:reduce)').matches),[interacted,setInteracted]=useState(false);
@@ -26,8 +28,10 @@ export default function Landing({onDemo}){
     <aside className={'pf-notification'+(sent?' received':'')}><span className="pf-notify-icon"><Mail size={24}/></span><div><strong>{sent?'New submission saved.':'Saved first. Sent second.'}</strong><p>{sent?'Your message is in the inbox.':'An inbox, plus email notifications.'}</p><span><Check size={14}/> {sent?'Contact form':'Pentreeform'}</span></div></aside>
    </section>
    <section className="pf-human" aria-label="Keep working while Pentreeform collects your messages"><img src="/working-human.png" alt="A person working at a laptop, seated at a desk" width="1536" height="1024" loading="lazy"/></section>
+   <SetupGuide/>
    <section className="pf-pricing" id="pricing" aria-labelledby="pf-pricing-title"><span className="pf-eyebrow">ROOM TO GROW</span><h2 id="pf-pricing-title">Start free. Stay affordable.</h2><div className="pf-price-grid">{[{name:'Free',price:0,count:'100'},{name:'Starter',price:3,count:'1,000'},{name:'Pro',price:7,count:'5,000'},{name:'Agency',price:15,count:'15,000'}].map(p=><a href="/app?auth=register" key={p.name} className="pf-price"><h3>{p.name}</h3><p><strong>${p.price}</strong><span>/ month</span></p><span>{p.count} submissions</span></a>)}</div><p className="pf-price-note">USD · monthly billing</p></section>
+   <LandingFAQ/>
   </main>
-  <footer className="pf-footer"><span>© {new Date().getFullYear()} Pentreeform</span><a href="https://www.beepeelabs.cv/" target="_blank" rel="noreferrer">Built by BeepeeLabs</a></footer>
+  <PublicFooter/>
  </div>
 }
