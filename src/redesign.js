@@ -41,7 +41,7 @@ out:'<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 
 };
 function ic(n,s){if(['ur','right','left','down','out','dl'].indexOf(n)>-1)return '';s=s||20;return '<svg width="'+s+'" height="'+s+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+P[n]+'</svg>'}
 var LOGO=BRAND_ICON.trim();
-function logo(c){return '<div class="logo '+(c||'')+'">'+LOGO+'<span>pentreeform</span></div>'}
+function logo(c){return '<div class="logo '+(c||'')+'">'+LOGO+'</div>'}
 function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
 
 /* ---------- data ---------- */
