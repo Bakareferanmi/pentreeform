@@ -1,3 +1,4 @@
+import {BRAND_ICON} from './brand.js';
 // Imported from the supplied design. Presentation CSS and demo markup are preserved.
 export function mountRedesign(host,options={}) {
 let L=options.live||null,disposed=false;
@@ -38,7 +39,7 @@ cok:'<circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/>',
 out:'<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/>'
 };
 function ic(n,s){s=s||20;return '<svg width="'+s+'" height="'+s+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+P[n]+'</svg>'}
-var LOGO='<svg viewBox="0 0 64 64" aria-hidden="true"><path fill="currentColor" d="M18 3 47 13Q58 17 58 29v9Q58 51 45 47L29 42V30l15 5V24l-26-8zM7 29l17-10v36L7 64z"/></svg>';
+var LOGO=BRAND_ICON.trim();
 function logo(c){return '<div class="logo '+(c||'')+'">'+LOGO+'<span>pentreeform</span></div>'}
 function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
 
