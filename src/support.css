@@ -18,3 +18,44 @@
 .google-note{margin-top:8px;font-size:12px}
 .auth-divider{display:flex;align-items:center;gap:12px;font-size:12px;color:var(--muted);margin:18px 0 6px}
 .auth-divider:before,.auth-divider:after{content:'';flex:1;height:1px;background:var(--line)}
+
+/* Legible dialog controls in both the demo and connected account. */
+.mb{padding:16px;background:rgba(20,9,42,.68)}
+.modal{width:560px;max-height:calc(100dvh - 32px);padding:28px;border:1px solid #b7a5cc;color:var(--text);font-size:16px;line-height:1.6;overflow-wrap:anywhere}
+.modal .ph{align-items:flex-start;gap:16px;margin-bottom:20px}
+.modal .ph h2{font-size:28px;line-height:1.3;font-weight:800;color:var(--ink);padding-top:4px}
+.modal p{font-size:16px;line-height:1.65;color:#44354f;margin-bottom:16px}
+.modal h3{font-size:18px;line-height:1.4;color:var(--ink)}
+.modal .field{font-size:16px;font-weight:600;color:#352449;gap:8px;margin-bottom:18px}
+.modal .field input,.modal .field select,.modal .field textarea{min-height:48px;font-size:16px;line-height:1.5;font-weight:400;color:var(--text);background:#fff;border:1.5px solid #9683ab;padding:11px 13px}
+.modal .field input::placeholder,.modal .field textarea::placeholder{color:#6b5b78;opacity:1}
+.modal .field input[readonly]{background:#f3edf9;color:#352449}
+.modal .btn{min-height:48px;height:auto;padding:12px 18px;font-size:16px;font-weight:700;line-height:1.4;border-color:#9683ab;color:var(--purple-600);gap:10px;white-space:normal}
+.modal .btn.pri{background:var(--purple);border-color:var(--purple);color:#fff}
+.modal .btn.pri:hover{background:var(--purple-600);border-color:var(--purple-600)}
+.modal .btn.dng{background:#fff0f2;border-color:#b15a67;color:#922435}
+.modal .btn.dng:hover{background:#fbdde3;border-color:#922435}
+.modal .btn:disabled{background:#e9e2f1;border-color:#b7a5cc;color:#76688a}
+.modal .ibtn{min-width:44px;min-height:44px;flex-shrink:0}
+.modal .ph .ibtn{width:44px;height:44px;border:1px solid #9683ab;border-radius:12px;background:#f3edf9;color:#352449}
+.modal .ph .ibtn:hover{background:#e5d5f8;color:var(--purple-700)}
+.modal .btn svg,.modal .ibtn svg{width:22px;height:22px;stroke-width:2.25}
+.modal .badge{font-size:14px;font-weight:700;padding:5px 12px;color:var(--purple-600)}
+.modal .code{border:1px solid #614c7c;padding:20px 68px 20px 18px}
+.modal .code pre{font-size:15px;line-height:1.65;color:#fff}
+.modal .code .ibtn{color:#fff;background:#4b326b;border:1px solid #ac91cd;border-radius:10px}
+.modal .code .ibtn:hover{background:#65468a}
+.modal p.err{font-size:16px;color:#922435;background:#fff0f2;border:1px solid #b15a67;border-radius:10px;padding:12px}
+.modal :focus-visible{outline:3px solid var(--purple-600);outline-offset:3px}
+.modal .alist{gap:14px}
+.modal .alist .btn{justify-content:flex-start;text-align:left}
+.toast,.live-banner{font-size:16px;line-height:1.5;border:1px solid #8c71ab}
+.toast>svg{width:24px;height:24px}
+.toast button,.live-banner button{min-width:44px;min-height:44px;color:#fff;align-items:center;justify-content:center;flex-shrink:0}
+.toast button svg{width:22px;height:22px;stroke-width:2.25}
+@media(max-width:600px){
+  .modal{padding:20px;border-radius:18px}
+  .modal .ph h2{font-size:24px}
+  .modal form>.btn,.modal>.btn{width:100%}
+  .toast,.live-banner{bottom:16px;padding:12px;gap:10px}
+}
