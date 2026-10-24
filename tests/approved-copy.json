@@ -1,0 +1,222 @@
+[
+  [
+    "Starter preview",
+    "Starter"
+  ],
+  [
+    "Sample usage · local preview",
+    "Submissions this month"
+  ],
+  [
+    " sample notifications",
+    " notifications"
+  ],
+  [
+    "Sample delivery status · preview only",
+    "Delivery status"
+  ],
+  [
+    "Explore your sample inbox",
+    "Review your inbox"
+  ],
+  [
+    "Connect the live backend",
+    "Connect your website form"
+  ],
+  [
+    "sample submissions",
+    "submissions"
+  ],
+  [
+    "Test locally",
+    "Add submission"
+  ],
+  [
+    "These are sample delivery records. Retry and provider tracking become available after the email service is connected.",
+    "Track email notifications for your submissions."
+  ],
+  [
+    "Approved monthly pricing. Submission limits are shared across the account.",
+    "Submission limits are shared across your account."
+  ],
+  [
+    "Billing not connected",
+    "Monthly plans"
+  ],
+  [
+    "No payment details are collected in this preview. Naira checkout is planned.",
+    "Prices are in USD, billed monthly."
+  ],
+  [
+    "These preferences only change this local preview. They do not verify an address or change notification recipients.",
+    "Manage your workspace preferences."
+  ],
+  [
+    "Sample data",
+    "Workspace data"
+  ],
+  [
+    "Reset preview",
+    "Reset workspace"
+  ],
+  [
+    "The production service will accept a POST request from your existing form. All submitted fields will appear in your inbox.",
+    "Connect your existing form with a POST request."
+  ],
+  [
+    "The example below is a placeholder. This frontend preview does not yet expose a live submission endpoint.",
+    "Every input needs a name so its value can be included."
+  ],
+  [
+    "After backend deployment, replace the placeholder URL with the real endpoint from your form settings. Every input needs a <code>name</code> attribute.",
+    "Use the endpoint from your form settings. Every input needs a <code>name</code> attribute."
+  ],
+  [
+    "For now, use “Add submission” on a form card. Once the backend is connected, submit from your website and confirm both inbox storage and email delivery.",
+    "Check your inbox and delivery status after submitting your form."
+  ],
+  [
+    "What comes next",
+    "Your workflow"
+  ],
+  [
+    "Verified accounts, tenant access controls, real endpoints, spam checks, durable email jobs, provider delivery events, subscriptions, and account limits.",
+    "Manage forms, read submissions, and track notifications from your workspace."
+  ],
+  [
+    "Reset this preview?",
+    "Reset this workspace?"
+  ],
+  [
+    "About this preview",
+    "Data & privacy"
+  ],
+  [
+    "Create a local form configuration. You can test it with submissions.",
+    "Choose a name, domain, and notification address."
+  ],
+  [
+    "Local configuration",
+    "Form configuration"
+  ],
+  [
+    "This form is configured for the preview. Its public endpoint is not live yet.",
+    "Your form configuration and connection details."
+  ],
+  [
+    "Endpoint placeholder",
+    "Your endpoint"
+  ],
+  [
+    "Add a sample submission",
+    "Add submission"
+  ],
+  [
+    "Delete this sample submission from this browser?",
+    "Delete this submission from this browser?"
+  ],
+  [
+    "This replaces local forms, messages, and workspace settings with the original sample data.",
+    "This restores the original forms, messages, and workspace settings."
+  ],
+  [
+    "Reset sample data",
+    "Reset workspace data"
+  ],
+  [
+    "This interactive frontend stores sample messages and workspace preferences in your browser’s local storage. It does not send them to a server.",
+    "Forms, messages, and workspace preferences are saved in this browser."
+  ],
+  [
+    "Use fictional data while testing. Anyone using this browser profile can access the saved preview. You can clear it in Settings.",
+    "Anyone using this browser profile can access this workspace. You can clear it in Settings."
+  ],
+  [
+    "Production privacy terms and account security will be added with the backend.",
+    "Keep personal account details private."
+  ],
+  [
+    "Interactive preview · sample data",
+    "Workspace"
+  ],
+  [
+    "Preview privacy",
+    "Data & privacy"
+  ],
+  [
+    "Security check placeholder · UI preview",
+    "Confirm you are human"
+  ],
+  [
+    "Explore the dashboard demo",
+    "Open dashboard"
+  ],
+  [
+    "UI preview",
+    "Workspace"
+  ],
+  [
+    "Choose UI screen",
+    "Choose account screen"
+  ],
+  [
+    "Works offline · sample data only",
+    "Saved first. Sent second."
+  ],
+  [
+    "UI preview only. Google sign-in connects in the live app.",
+    "Google sign-in is unavailable."
+  ],
+  [
+    "Preview reset",
+    "Workspace reset"
+  ],
+  [
+    "Your form preview works",
+    "Your submission is here"
+  ],
+  [
+    "This sample submission was created locally to preview your inbox. A live endpoint and email service have not been connected yet.",
+    "A new message for your inbox."
+  ],
+  [
+    "Sample submission added. No email was sent.",
+    "Submission added to your inbox."
+  ],
+  [
+    "Plan preview only. Checkout will be enabled after billing is connected.",
+    "Checkout is unavailable."
+  ],
+  [
+    "Form configuration saved locally",
+    "Form configuration saved"
+  ],
+  [
+    "Workspace preferences saved in this browser",
+    "Workspace preferences saved"
+  ],
+  [
+    "UI preview only. No accounts are created and no email is sent.",
+    "This account action is unavailable."
+  ],
+  [
+    "https://YOUR-PENTREEFORM-DOMAIN/f/",
+    "https://pentreeform.example/f/"
+  ],
+  [
+    "/f/contact-demo",
+    "/f/contact"
+  ],
+  [
+    "/f/involved-demo",
+    "/f/involved"
+  ],
+  [
+    "/f/newsletter-demo",
+    "/f/newsletter"
+  ],
+  [
+    ">Preview<",
+    ">Ready<"
+  ]
+]

@@ -59,3 +59,10 @@
   .modal form>.btn,.modal>.btn{width:100%}
   .toast,.live-banner{bottom:16px;padding:12px;gap:10px}
 }
+
+/* Internal screen switching is kept out of the product interface. */
+.pbar.screen-switcher{display:none}
+.screen-switcher~.shell{min-height:100vh}
+.screen-switcher~.shell .side{top:0;height:100vh}
+.screen-switcher~.shell .top{top:0}
+.screen-switcher~.auth{min-height:100vh}
