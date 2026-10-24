@@ -38,7 +38,7 @@ ur:'<path d="M7 7h10v10"/><path d="M7 17 17 7"/>',
 cok:'<circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/>',
 out:'<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/>'
 };
-function ic(n,s){s=s||20;return '<svg width="'+s+'" height="'+s+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+P[n]+'</svg>'}
+function ic(n,s){if(['ur','right','left','down','out','dl'].indexOf(n)>-1)return '';s=s||20;return '<svg width="'+s+'" height="'+s+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+P[n]+'</svg>'}
 var LOGO=BRAND_ICON.trim();
 function logo(c){return '<div class="logo '+(c||'')+'">'+LOGO+'<span>pentreeform</span></div>'}
 function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
@@ -137,7 +137,7 @@ function detail(m){
  return '<button class="back btn sm" data-a="back">'+ic('left',16)+'Back to inbox</button><div class="dh"><h2>'+esc(m.subject)+'</h2><button class="ibtn bd" title="'+(m.read?'Mark unread':'Mark read')+'" aria-label="'+(m.read?'Mark unread':'Mark read')+'" data-a="toggleread" data-v="'+m.id+'">'+ic('mail',18)+'</button><button class="ibtn bd" aria-label="More message actions" data-a="modal" data-t="actions" data-v="'+m.id+'">'+ic('dots',20)+'</button></div>'+badge(esc(formName(m.formId)))+
  '<div class="ds"><span class="'+avc(m.name)+'">'+esc(ini(m.name))+'</span><div><strong>'+esc(m.name)+'</strong><small>'+esc(m.email)+'</small></div><time>'+new Date(m.date).toLocaleString(undefined,{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'})+'</time></div>'+
  '<dl><dt>Name</dt><dd>'+esc(m.name)+'</dd><dt>Email</dt><dd><a href="mailto:'+esc(m.email)+'">'+esc(m.email)+'</a></dd><dt>Message</dt><dd class="mbody">'+esc(m.message)+'</dd></dl>'+
- '<div class="dcard '+cls+'">'+ic('cok',24)+'<div><strong>'+(DLV[d]||'Email not connected')+'</strong><small>Sample delivery status · preview only</small></div><button aria-label="View delivery details" data-a="nav" data-v="Deliveries">'+ic('ur',18)+'</button></div>'+
+ '<div class="dcard '+cls+'">'+ic('cok',24)+'<div><strong>'+(DLV[d]||'Email not connected')+'</strong><small>Sample delivery status · preview only</small></div><button class="btn sm" aria-label="View delivery details" data-a="nav" data-v="Deliveries">Details</button></div>'+
  '<a class="btn reply" href="mailto:'+esc(m.email)+'?subject='+encodeURIComponent('Re: '+m.subject)+'">'+ic('mail',17)+'Reply by email</a>';
 }
 function overview(){

@@ -5,3 +5,9 @@
 .live-banner button{color:#c9b8e6;text-decoration:underline;white-space:nowrap}
 .challenge{margin:18px 0;min-height:65px}
 .amsg.err{background:var(--red-bg);color:var(--red);border:1px solid #e0b4bc}
+
+/* Shared reference styling for connection, loading, and disabled control states. */
+.state-card{width:100%;max-width:550px;display:flex;flex-direction:column;align-items:center;gap:16px}
+.loading:has(.state-card){min-height:calc(100vh - 52px)}
+.btn:disabled{background:#e9e2f1;border-color:#d3c7e6;color:#76688a;box-shadow:none}
+.dcard button.btn{width:auto;min-width:64px;padding:0 12px;color:var(--purple-600)}
