@@ -80,3 +80,6 @@ footer a,footer button{color:#51405e;font-weight:550}
  .attention,.attention button{font-size:12px}
  .auth-story{border-right:0;border-bottom:1px solid #b9adc9}
 }
+
+.demo-entry{display:inline-flex;align-items:center;gap:10px;padding:0;width:fit-content;color:var(--purple);font-size:13px;font-weight:650;text-align:left}
+.demo-entry:hover{text-decoration:underline}

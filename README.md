@@ -52,7 +52,7 @@ For UI-only development:
 npm run dev
 ```
 
-Open `/demo` on the Vite URL. The live root intentionally shows a backend setup screen when no API is available.
+Open `/?demo=1` on the Vite URL. `/demo`, `/demo/`, and `/#demo` also open the demo. The demo skips account and backend requests. The sign-in, loading, and backend setup screens include a demo button that opens it immediately without navigating to another route.
 
 ## Validation
 
