@@ -7,6 +7,7 @@ The UI is imported from the supplied `design/Pentreeform_Redesign.html`. Its CSS
 ## Current implementation
 
 - Registration, email verification, sign-in/out, password reset, expiring HttpOnly sessions
+- Google sign-in/signup with PKCE, nonce/state checks, signed token validation, and subject-based identity mapping
 - Separate tenant data and server-side access checks
 - Form creation, archiving, exact HTTPS hostname restrictions, verified account email as recipient
 - JSON, URL-encoded, and multipart text submissions; custom fields preserved; file uploads rejected

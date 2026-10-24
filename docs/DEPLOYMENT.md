@@ -100,6 +100,31 @@ Subscription lifecycle events fetch current provider state. Only verified paymen
 
 Test successful, failed, pending, duplicate, renewal, cancellation, and late/out-of-order callbacks before using live keys. Make a controlled real payment and verify cancellation on the actual merchant account before inviting paying customers.
 
+## Google sign-in and sign-up
+
+Both account screens include **Continue with Google**. They use a server-side authorization-code flow with PKCE, a browser-bound state cookie, a single-use database state record, a nonce, and signed ID-token validation using Google's public keys. Only `openid email profile` is requested. Provider access and refresh tokens are not stored.
+
+1. In Google Cloud / Google Auth Platform, configure the consent screen and create an OAuth client of type **Web application**. Use test users while the consent screen is in testing mode.
+2. Add the exact authorized redirect URI: `https://YOUR-APP/api/auth/google/callback`. For local testing, add `http://localhost:8787/api/auth/google/callback` separately. The configured `APP_ORIGIN` must match that deployment.
+3. Store credentials as Worker secrets:
+
+```sh
+npx wrangler secret put GOOGLE_CLIENT_ID
+npx wrangler secret put GOOGLE_CLIENT_SECRET
+npm run db:remote
+npm run deploy
+```
+
+`0002_google_auth.sql` creates the identity and short-lived flow tables. Apply it before using Google login. Local copies of the credentials belong in `.dev.vars`, never committed source.
+
+The button stays visible but disabled until both credentials are configured. Google signup also respects `REGISTRATION_OPEN`; Google login remains available to existing Google users when new registrations are closed. The demo button only displays a preview notice.
+
+Gmail and Google Workspace identities with verified email can activate immediately. Other Google email addresses still receive Pentreeform's local verification email before accepting form notifications; configure Resend for those accounts.
+
+An existing password account is **not automatically linked** because an email address matches. Those users should use the existing email/password sign-in or password reset. Explicit account linking is not included. An existing Google identity whose email changes is directed to support rather than silently changing notification recipients.
+
+Test new signup, returning login, cancelled consent, stale state, same-email password accounts, and logout on the deployed domain. Automated tests use signed fixture tokens and mocked Google endpoints; actual consent and Google Cloud configuration still need a live smoke test.
+
 ## 7. Operational checks
 
 - Confirm the scheduled handler is enabled and inspect errors in Cloudflare. An empty mail queue after a successful send is not proof of inbox placement.

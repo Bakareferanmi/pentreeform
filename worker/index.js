@@ -1,5 +1,6 @@
 import {PLANS,query,now,origin,csrf,account,publicUser,json,fail,readJSON,text,rate} from './core.js';
 import {authRoute} from './auth.js';
+import {googleConfigured} from './google.js';
 import {drain,mailWebhook} from './mail.js';
 import {submit,state,createForm,updateMessage,exportCSV} from './submissions.js';
 import {billingRoute,billingWebhook} from './billing.js';
@@ -8,7 +9,7 @@ export async function handle(req,env,ctx={waitUntil(){}}){const path=new URL(req
  try{
  if(!path.startsWith('/api/')&&!path.startsWith('/f/'))return secure(await env.ASSETS.fetch(req));
  if(!env.DB)fail(503,'Database binding is not configured.');
- if(path==='/api/config'&&req.method==='GET')return secure(json({registrationOpen:env.REGISTRATION_OPEN==='true'&&!!env.RESEND_API_KEY&&!!env.TURNSTILE_SECRET_KEY,turnstileSiteKey:env.TURNSTILE_SITE_KEY||'',emailConfigured:!!env.RESEND_API_KEY&&!!env.EMAIL_FROM&&!env.EMAIL_FROM.includes('YOUR-'),billingConfigured:!!env.PAYSTACK_SECRET_KEY,plans:PLANS}));
+ if(path==='/api/config'&&req.method==='GET')return secure(json({registrationOpen:env.REGISTRATION_OPEN==='true'&&!!env.RESEND_API_KEY&&!!env.TURNSTILE_SECRET_KEY,googleConfigured:googleConfigured(env),googleRegistrationOpen:env.REGISTRATION_OPEN==='true'&&googleConfigured(env),turnstileSiteKey:env.TURNSTILE_SITE_KEY||'',emailConfigured:!!env.RESEND_API_KEY&&!!env.EMAIL_FROM&&!env.EMAIL_FROM.includes('YOUR-'),billingConfigured:!!env.PAYSTACK_SECRET_KEY,plans:PLANS}));
  if(path==='/api/webhooks/resend'&&req.method==='POST')return secure(await mailWebhook(req,env));
  if(path==='/api/webhooks/paystack'&&req.method==='POST')return secure(await billingWebhook(req,env));
  if(path.startsWith('/f/')){const response=await submit(req,env,path.slice(3));if(response.ok)ctx.waitUntil(drain(env).catch(()=>{}));return secure(response)}
@@ -26,6 +27,6 @@ export async function handle(req,env,ctx={waitUntil(){}}){const path=new URL(req
  }catch(e){let status=e.status||500,message=e.status?e.message:'The request could not be completed. Please try again.';if(e.message?.includes('one_pending_checkout')||e.message?.includes('checkouts.user_id')){status=409;message='A checkout is already pending for this account.'}if(e.message?.includes('FORM_LIMIT')){status=403;message='Your plan has reached its active form limit.'}return secure(json({error:message},status))}
 }
 export async function cleanup(env){
- await env.DB.batch([query(env,'DELETE FROM sessions WHERE expires_at<?',now()),query(env,'DELETE FROM auth_tokens WHERE expires_at<?',now()),query(env,'DELETE FROM rate_limits WHERE expires_at<?',now()),query(env,`DELETE FROM submissions WHERE id IN (SELECT s.id FROM submissions s JOIN users u ON u.id=s.user_id WHERE s.created_at < ? - (CASE WHEN u.paid_until<=? THEN 30 WHEN u.plan='Starter' THEN 183 ELSE 366 END)*86400 LIMIT 500)`,now(),now()),query(env,'DELETE FROM email_events WHERE created_at<? AND provider_id NOT IN (SELECT provider_id FROM outbox WHERE provider_id IS NOT NULL)',now()-30*86400),query(env,"DELETE FROM outbox WHERE submission_id IS NULL AND state NOT IN ('queued','sending') AND created_at<?",now()-30*86400)]);
+ await env.DB.batch([query(env,'DELETE FROM oauth_states WHERE expires_at<?',now()),query(env,'DELETE FROM sessions WHERE expires_at<?',now()),query(env,'DELETE FROM auth_tokens WHERE expires_at<?',now()),query(env,'DELETE FROM rate_limits WHERE expires_at<?',now()),query(env,`DELETE FROM submissions WHERE id IN (SELECT s.id FROM submissions s JOIN users u ON u.id=s.user_id WHERE s.created_at < ? - (CASE WHEN u.paid_until<=? THEN 30 WHEN u.plan='Starter' THEN 183 ELSE 366 END)*86400 LIMIT 500)`,now(),now()),query(env,'DELETE FROM email_events WHERE created_at<? AND provider_id NOT IN (SELECT provider_id FROM outbox WHERE provider_id IS NOT NULL)',now()-30*86400),query(env,"DELETE FROM outbox WHERE submission_id IS NULL AND state NOT IN ('queued','sending') AND created_at<?",now()-30*86400)]);
 }
 export default {fetch:handle,async scheduled(event,env,ctx){ctx.waitUntil((async()=>{await drain(env,20);await cleanup(env)})())}};

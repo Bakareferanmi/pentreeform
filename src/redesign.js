@@ -1,4 +1,5 @@
 import {BRAND_ICON} from './brand.js';
+import {GOOGLE_ICON} from './google-brand.js';
 // Imported from the supplied design. Presentation CSS and demo markup are preserved.
 export function mountRedesign(host,options={}) {
 let L=options.live||null,disposed=false;
@@ -201,7 +202,7 @@ function auth(){
  var links=v?'<button data-a="screen" data-v="login">'+ic('out',14)+'Sign out</button>':(m==='login'?'<button data-a="mode" data-v="register">Create an account</button><button data-a="mode" data-v="forgot">Forgot password?</button><button data-a="mode" data-v="resend">Resend verification</button>':'<button data-a="mode" data-v="login">Back to sign in</button>');
  return '<div class="auth"><section class="story">'+logo()+'<div><span class="eyebrow">FORMS, WITHOUT THE BACKEND WORK.</span><h1>Your website enquiries.<br>All accounted for.</h1><p>Connect your form, keep every message, and see what happened to the notification.</p><div class="prom">'+ic('shieldc',20)+'<span>Saved first. Sent second.</span></div></div><button class="demo" data-a="screen" data-v="dashboard">Explore the dashboard demo '+ic('right',17)+'</button></section>'+
  '<section class="amain"><div class="acard"><span class="eyebrow">PENTREEFORM</span><h2>'+title+'</h2><p>'+sub+'</p>'+(S.amsg?'<div role="status" class="amsg ok">'+esc(S.amsg)+'</div>':'')+
- '<form data-f="auth">'+f+'<button class="btn pri asub" type="submit"'+((need&&!S.tok)?' disabled':'')+'>'+lbl+ic('right',17)+'</button></form><div class="links">'+links+'</div></div><p class="credit">Built by <a href="https://www.beepeelabs.cv/" target="_blank" rel="noreferrer">BeepeeLabs</a></p></section></div>';
+ (!v&&['login','register'].indexOf(m)>-1?'<div class="social-auth"><button type="button" class="btn google-btn" data-a="google-preview">'+GOOGLE_ICON+'Continue with Google</button><div class="auth-divider">or continue with email</div></div>':'')+'<form data-f="auth">'+f+'<button class="btn pri asub" type="submit"'+((need&&!S.tok)?' disabled':'')+'>'+lbl+ic('right',17)+'</button></form><div class="links">'+links+'</div></div><p class="credit">Built by <a href="https://www.beepeelabs.cv/" target="_blank" rel="noreferrer">BeepeeLabs</a></p></section></div>';
 }
 function pbar(){
  var o=[['dashboard','Dashboard & all app pages'],['login','Sign in'],['register','Create account'],['forgot','Forgot password'],['resend','Resend verification'],['reset','Reset password'],['verify','Verify email']];
@@ -226,6 +227,7 @@ listen(R,'click',function(e){
  if(L&&liveClick(e,t,a,v))return;
  if(a==='mbclose'){if(e.target!==t)return;S.modal=null;return render()}
  switch(a){
+  case 'google-preview':toast('UI preview only. Google sign-in connects in the live app.');break;
   case 'nav':go(v);break;
   case 'navopen':S.nav=true;render();break;
   case 'navclose':S.nav=false;render();break;
