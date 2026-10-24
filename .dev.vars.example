@@ -1,0 +1,10 @@
+# Copy to .dev.vars (ignored). Configure secrets in Cloudflare for production.
+RESEND_API_KEY=
+RESEND_WEBHOOK_SECRET=
+TURNSTILE_SECRET_KEY=
+PAYSTACK_SECRET_KEY=
+# Monthly Paystack plans must match the approved USD prices exactly.
+# Checkout stays unavailable unless the merchant supports USD recurring payments.
+PAYSTACK_PLAN_STARTER=
+PAYSTACK_PLAN_PRO=
+PAYSTACK_PLAN_AGENCY=

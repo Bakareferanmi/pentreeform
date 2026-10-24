@@ -1,77 +1,80 @@
 # Pentreeform
 
-An interactive React frontend for an affordable form submission service. Based on the approved purple dashboard concept.
+A purple React dashboard and Cloudflare Workers backend for a public form submission service.
 
-## Status
+## Current implementation
 
-**Frontend preview, not a production form backend.** Sample submissions and workspace preferences are stored in this browser using localStorage. There is no account authentication, public submission API, email service, or payment processing yet. Do not enter real customer data. Form endpoint URLs are explicit placeholders.
+- Registration, email verification, sign-in/out, password reset, expiring HttpOnly sessions
+- Separate tenant data and server-side access checks
+- Form creation, archiving, exact HTTPS hostname restrictions, verified account email as recipient
+- JSON, URL-encoded, and multipart text submissions; custom fields preserved; file uploads rejected
+- Turnstile, honeypot, rate limits, request-size limits, and submission idempotency
+- Atomic account-wide monthly submission quotas and active form limits in SQLite triggers
+- Submission storage and durable email outbox created together, before email is sent
+- Bounded retries with stable Resend idempotency keys, signed delivery events, bounce/complaint suppression
+- Free/paid retention, cursor pagination, read/unread, spam, deletion, and paid CSV export
+- Paystack monthly plan checkout, server-verified payments, signed webhooks, duplicate protection, subscription management
+- Responsive app, settings, documentation, and an isolated `/demo` with fictional local data
 
-## Run locally
+**Implemented and tested locally; not deployed or connected to live provider accounts.** Registration defaults to closed. See [deployment instructions](docs/DEPLOYMENT.md) for what must be configured. The frontend can no longer be deployed by itself as the live product; the Worker serves both the API and built assets.
 
-Requires Node.js 20.19+ or 22.12+ and npm.
+## Pricing
 
-```sh
-npm ci
-npm run dev
-```
+Monthly USD prices. Limits are shared across the account, not per form.
 
-Open the local URL shown in the terminal.
-
-```sh
-npm run build
-npm run preview
-```
-
-## Included
-
-- Responsive dashboard, inbox, and message detail view
-- Search, form/date filters, unread and spam tabs
-- Mark read/unread, move to spam/inbox, and confirmed deletion
-- CSV export with spreadsheet formula escaping
-- Form configuration and local sample submission generation
-- Sample delivery records, workspace overview, documentation
-- Editable workspace preferences and confirmed preview reset
-- Accessible dialog focus management, keyboard controls, reduced-motion support
-- Purple SVG identity and favicon inspired by the approved concept
-
-## Approved pricing (monthly USD)
-
-| Plan | Price | Account submissions/month | Active forms | History |
+| Plan | Price | Submissions/month | Active forms | History |
 | --- | --- | --- | --- | --- |
 | Free | $0 | 100 | 2 | 30 days |
 | Starter | $3 | 1,000 | 5 | 6 months |
 | Pro | $7 | 5,000 | 20 | 12 months |
 | Agency | $15 | 15,000 | 50 | 12 months |
 
-These are display plans only. The preview does not enforce account quotas or collect payments. CSV export and custom redirects are intended paid-plan features; export is available for demonstration.
+The server approximates 6/12-month retention as 183/366 days. Monthly usage resets on UTC calendar months; paid access expires one calendar month after the provider's payment timestamp. CSV export and custom redirects require a paid plan. Existing active forms are not automatically archived after a downgrade, but new form creation is blocked above the new limit. Paid plans do not bypass security or abuse controls.
 
-## Deploy the frontend
+Checkout is unavailable unless the configured Paystack merchant supports recurring USD payments and the actual provider plans match these prices. No exchange rate or naira prices have been invented. Availability of USD billing must be confirmed in the merchant account; a different provider or separately approved local prices may be needed.
 
-Cloudflare Pages, Vercel, or Netlify can build this repository with `npm run build` and publish `dist`. No environment variables are needed for the preview. Deployment is separate from the backend work.
+## Local development
 
-## Interaction checks
-
-Run `npm test` to check the main React flows in a DOM environment without a browser.
-
-## Browser checks
-
-Start the development server on port 5173, then in another terminal:
+Node.js **22.13+** (Node 24 recommended) and npm.
 
 ```sh
-npx playwright install chromium
-npm run test:ui
+npm ci
+npm run build
+npm run db:local
+npm run dev:full
 ```
 
-Checks cover search, selection, form creation, sample submission, refresh persistence, CSV download, mobile navigation/detail, horizontal overflow, and runtime errors. Test data is isolated in a new browser context. Screenshots are saved to the OS temporary directory.
+First replace the D1 database ID and copy `.dev.vars.example` to `.dev.vars`; see the setup guide. Open the Wrangler URL, usually `http://localhost:8787`. App origin must match exactly. Full-stack development serves the built frontend; rebuild after changing UI files.
 
-## Backend work before a public launch
+For UI-only development:
 
-1. Cloudflare Workers API and D1 migrations with tenant ownership enforced server-side.
-2. Verified accounts, secure sessions, password reset, rate limits, and recipient verification.
-3. Form endpoints accepting HTML and JSON submissions, input limits, honeypots, Turnstile, and abuse controls. Domain checks alone do not prevent abuse.
-4. Persist submissions before enqueueing notification jobs. Add idempotency, bounded retries, and provider-signed delivery webhooks. Provider acceptance is different from delivery; delivery does not guarantee inbox placement.
-5. Verified sender domain, correct Reply-To, bounce/complaint handling, and recipient suppression.
-6. Subscription provider integration with signed webhooks, server-enforced quotas, retention, and usage alerts.
-7. Backups, monitoring, privacy terms, data export/deletion, and recovery testing.
+```sh
+npm run dev
+```
 
-Do not open paid public registration until these are implemented and validated.
+Open `/demo` on the Vite URL. The live root intentionally shows a backend setup screen when no API is available.
+
+## Validation
+
+```sh
+npm test
+npm run build
+npx wrangler deploy --dry-run
+```
+
+Tests use real SQLite with the production schema and mocked email, security, and payment providers. They cover account flows, tenant separation, CSRF, verified recipients, limits, transactional outbox, idempotency, callbacks, suppression, reset/session revocation, payment verification, CSV escaping, and real/demo frontend wiring. They do **not** prove live provider delivery, Cloudflare operation, payment acceptance, or visual correctness in real browsers.
+
+Optional browser checks: start Vite on port 5173, install Chromium with `npx playwright install chromium`, then run `npm run test:ui`. These exercise `/demo`. Browser rendering was unavailable in the build environment; run them on a laptop or CI before launch.
+
+## Notes for the operator
+
+- Use `/demo` only for fictional data. It stores sample data locally. The live app keeps its session in a cookie and loads data from D1.
+- The inbox initially loads 100 messages. Search, filters, and summary counts cover loaded messages; load older pages as needed. CSV export streams all retained matching records from the server.
+- Notifications go only to the verified account email. Additional recipient verification and team accounts are not included yet.
+- Domain checks are defense in depth; Turnstile is mandatory on public submissions. Customer website hostnames must also be permitted in the operator's Turnstile configuration. This beta does not provision Turnstile domains automatically.
+- Email acceptance, delivery to the recipient server, and inbox placement are different. Only a signed delivery event marks a notification delivered.
+- Accepted messages are not automatically resent if a callback is missing. Provider retries are bounded to five attempts and the idempotency window.
+- Archiving stops submissions but keeps historical messages. Deleting a submission removes its outbox record. Deletion cannot recall a message already sent or in flight.
+- Scheduled retention deletes old messages. A downgrade to Free reduces retention to 30 days; export before downgrading.
+- No file uploads, autoresponders, recipient changes, team roles, admin UI, or automatic naira billing are included in this release.
+- Public registration should remain closed until the setup and live smoke tests in the deployment guide pass. Publish operator-specific privacy/terms and a support contact before charging customers.

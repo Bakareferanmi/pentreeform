@@ -1,0 +1,125 @@
+# Deploy Pentreeform
+
+The repository contains the implementation, not access to your Cloudflare, email, or payment accounts. Never commit API keys. Do not paste keys into chat; configure them with Wrangler or the provider dashboard.
+
+## 1. Get the code
+
+```sh
+git clone https://github.com/Bakareferanmi/pentreeform.git
+cd pentreeform
+npm ci
+npx wrangler login
+npx wrangler d1 create pentreeform
+```
+
+Copy the returned database ID into `wrangler.jsonc` under `d1_databases`. Keep binding `DB`. The ID itself is not a password.
+
+## 2. Configure application and email
+
+In `wrangler.jsonc`:
+
+- `APP_ORIGIN`: your exact public origin, for example `https://pentreeform.YOUR-SUBDOMAIN.workers.dev`, with no trailing slash. A custom domain can be added later.
+- `EMAIL_FROM`: an address on a domain you own and have verified with Resend, e.g. `Pentreeform <notifications@yourdomain.com>`.
+- Leave `REGISTRATION_OPEN` as `false` until configuration is complete.
+
+In Resend, add the sending domain and publish its required DNS records. Keep your existing mailbox's MX records unless the provider explicitly requires a change for a separate subdomain. Confirm the sending domain verifies.
+
+```sh
+npx wrangler secret put RESEND_API_KEY
+```
+
+Configure a Resend webhook at `https://YOUR-APP/api/webhooks/resend`. Subscribe to `email.sent`, `email.delivered`, `email.bounced`, `email.complained`, and `email.failed`. Store its signing secret:
+
+```sh
+npx wrangler secret put RESEND_WEBHOOK_SECRET
+```
+
+The webhook uses signed payloads and a five-minute timestamp tolerance. Events are stored independently so callbacks arriving before the send response can still be reconciled.
+
+## 3. Configure Turnstile
+
+Create a Cloudflare Turnstile widget. Add the application's hostname for sign-up/reset verification. Add each customer website's exact hostname before enabling its form. Set `TURNSTILE_SITE_KEY` in `wrangler.jsonc`.
+
+```sh
+npx wrangler secret put TURNSTILE_SECRET_KEY
+```
+
+Authentication uses action `auth`; website form submissions use action `submission`. The backend checks the action and hostname. Your customers must use the HTML snippet in Documentation, including the widget.
+
+This beta uses an operator-managed widget and does not automate customer hostname provisioning. Turnstile hostname allowances depend on your account; verify them before offering broad self-service registration. If those allowances are too small, add per-customer widget support or a hosted challenge flow before scaling. Do not bypass server-side verification to work around this.
+
+## 4. Create the schema and deploy
+
+```sh
+npm test
+npm run db:remote
+npm run deploy
+```
+
+The single Worker serves the React frontend and `/api/*` and `/f/*`. The scheduled handler runs every minute to drain mail and clean expired records. This is not a static Pages-only deployment.
+
+For local development, copy `.dev.vars.example` to `.dev.vars`, fill test credentials, use the exact local `APP_ORIGIN`, apply `npm run db:local`, and run `npm run dev:full`. The local site can display authentication, but a real Turnstile challenge must be configured to work for its hostname. Use provider test settings, not production payments.
+
+## 5. Open registration for a controlled smoke test
+
+Set `REGISTRATION_OPEN` to `true` and redeploy only once email, Turnstile, and database configuration are ready. You can keep this closed while finishing billing. The config endpoint reports whether the required registration settings exist; it cannot prove DNS verification or deliverability.
+
+Test with an address you control:
+
+1. Register, open the email verification link, sign in, then sign out and sign in again.
+2. Create a form for your test site's exact HTTPS hostname. Test naked/www variants separately; hostnames are matched exactly.
+3. Add the form endpoint and Turnstile snippet to that website. Submit a message with a unique identifier.
+4. Confirm the stored message and custom fields appear in the inbox before relying on email. Confirm the email arrives. Reply should target the submitter.
+5. Confirm the signed delivery event changes `accepted` to `delivered`. Check spam/junk and the provider logs if the message is missing.
+6. Confirm a second account cannot read, modify, delete, or export the first account's messages.
+7. Test a bad origin, invalid security token, replayed idempotency key, Free form limit, and quota boundary on test accounts.
+8. Test archive, message deletion, password reset, and session expiry.
+9. Check laptop and phone layouts in real browsers. Run the included browser test suite when Chromium is available.
+
+If a test fails, close registration again while fixing it.
+
+## 6. Configure recurring payments
+
+The adapter is Paystack. It is not connected to your merchant account. **Confirm your merchant can collect recurring USD payments first.** This capability is account-dependent. If unavailable, use another supported merchant/provider or agree separate local prices before enabling checkout.
+
+Create monthly USD plans with these exact amounts in the provider's smallest currency units:
+
+| Environment variable | USD/month | Amount |
+| --- | --- | --- |
+| `PAYSTACK_PLAN_STARTER` | 3 | 300 |
+| `PAYSTACK_PLAN_PRO` | 7 | 700 |
+| `PAYSTACK_PLAN_AGENCY` | 15 | 1500 |
+
+Set each variable to its corresponding `PLN_...` code using `wrangler secret put VARIABLE_NAME`. Store `PAYSTACK_SECRET_KEY` the same way. Start with test-mode keys and plans.
+
+Webhook URL: `https://YOUR-APP/api/webhooks/paystack`.
+
+The server verifies the raw HMAC SHA-512 signature, then verifies successful transactions with Paystack. Client-side redirects alone never grant access. Amount, currency, customer email, and plan are checked against server configuration. Initial checkout references are generated and recorded server-side. Duplicate payment references cannot extend access twice.
+
+Subscription lifecycle events fetch current provider state. Only verified payments extend the paid period. Cancellation does not remove already-paid access; it expires at period end. Customers manage their existing subscription with the dashboard button. Plan switching is intentionally restricted while a subscription is active; upgrades/proration are not implemented.
+
+Test successful, failed, pending, duplicate, renewal, cancellation, and late/out-of-order callbacks before using live keys. Make a controlled real payment and verify cancellation on the actual merchant account before inviting paying customers.
+
+## 7. Operational checks
+
+- Confirm the scheduled handler is enabled and inspect errors in Cloudflare. An empty mail queue after a successful send is not proof of inbox placement.
+- Inspect failed mail jobs without exposing message payloads or credentials. Outbox errors show generic provider status, not API keys.
+- Check the Resend dashboard for rejected senders, bounces, complaints, suppressed recipients, quotas, and missing callbacks.
+- Accepted messages are not re-sent simply because a webhook is delayed. Diagnose them in provider logs.
+- D1 retention runs in bounded batches. Review privacy promises and current-plan retention before launch.
+- Cloudflare backup availability depends on account settings. Export a database backup with `npx wrangler d1 export pentreeform --remote --output backup.sql`, store it securely, and rehearse restoration into a separate test database. Backups contain personal data and password hashes.
+- Configure usage/spend notifications in provider dashboards and monitor database, email, and Worker quotas. This release does not send usage-threshold reminder emails.
+- Publish your privacy policy, terms, retention rules, support contact, and refund policy. This repository's data information panel is not a legal policy.
+- Add an operator administration interface and a tested support/data-deletion process before a broader launch. Those are not part of this backend release.
+
+## Reference documentation
+
+- https://developers.cloudflare.com/workers/static-assets/binding/
+- https://developers.cloudflare.com/d1/worker-api/d1-database/#batch
+- https://developers.cloudflare.com/turnstile/get-started/server-side-validation/
+- https://resend.com/docs/dashboard/webhooks/introduction
+- https://resend.com/docs/dashboard/emails/idempotency-keys
+- https://paystack.com/docs/payments/webhooks/
+- https://paystack.com/docs/payments/subscriptions/
+- https://paystack.com/docs/payments/verify-payments/
+- https://paystack.com/docs/api/subscription/
