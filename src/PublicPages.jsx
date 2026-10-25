@@ -1,4 +1,5 @@
 import React,{useEffect} from 'react';
+import ThemeToggle from './ThemeToggle.jsx';
 import {BRAND_ICON} from './brand.js';
 import {LandingFAQ} from './LandingSections.jsx';
 
@@ -36,5 +37,5 @@ function Support(){return <>
  </>}
 export default function PublicPage({page}){
  useEffect(()=>{const previous=document.title;document.title=PUBLIC_PAGES[page]+' · Pentreeform';const anchor=window.location.hash.slice(1);if(anchor)document.getElementById(anchor)?.scrollIntoView?.();return()=>{document.title=previous}},[page]);
- return <div className="pf-landing pf-public"><header className="pf-nav"><a className="pf-brand" href="/" aria-label="Pentreeform home"><span dangerouslySetInnerHTML={{__html:BRAND_ICON}}/></a><a className="pf-home-link" href="/">Back to home</a></header><main className="pf-document" id="main"><h1>{PUBLIC_PAGES[page]}</h1>{page!=='support'&&<p className="pf-policy-date">Updated October 24, 2026</p>}{page==='privacy'?<Privacy/>:page==='terms'?<Terms/>:<Support/>}</main><PublicFooter/></div>
+ return <div className="pf-landing pf-public"><header className="pf-nav"><a className="pf-brand" href="/" aria-label="Pentreeform home"><span dangerouslySetInnerHTML={{__html:BRAND_ICON}}/></a><div className="pf-nav-actions"><a className="pf-home-link" href="/">Back to home</a><ThemeToggle/></div></header><main className="pf-document" id="main"><h1>{PUBLIC_PAGES[page]}</h1>{page!=='support'&&<p className="pf-policy-date">Updated October 24, 2026</p>}{page==='privacy'?<Privacy/>:page==='terms'?<Terms/>:<Support/>}</main><PublicFooter/></div>
 }

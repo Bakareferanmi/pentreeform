@@ -1,3 +1,4 @@
+import {getTheme,toggleTheme,themeLabel,THEME_EVENT} from './theme.js';
 import {BRAND_ICON} from './brand.js';
 import {GOOGLE_ICON} from './google-brand.js';
 // Imported from the supplied design. Presentation CSS and demo markup are preserved.
@@ -114,6 +115,8 @@ function ini(n){return n.split(' ').map(function(x){return x[0]}).slice(0,2).joi
 
 /* ---------- views ---------- */
 function badge(t,c){return '<span class="badge '+(c||'')+'">'+t+'</span>'}
+function themeButton(){return '<button type="button" class="theme-toggle" data-a="theme" aria-label="'+themeLabel()+'" title="'+themeLabel()+'" aria-pressed="'+(getTheme()==='dark')+'"><svg class="theme-sun" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M2 12h2m16 0h2M5 5l1.5 1.5m11 11L19 19M5 19l1.5-1.5m11-11L19 5"/></svg><svg class="theme-moon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.9 13A9 9 0 0 1 11 3.1a9 9 0 1 0 9.9 9.9Z"/></svg></button>'}
+listen(window,THEME_EVENT,function(){host.querySelectorAll('.theme-toggle').forEach(function(button){button.setAttribute('aria-label',themeLabel());button.setAttribute('title',themeLabel());button.setAttribute('aria-pressed',String(getTheme()==='dark'))})});
 function codeBlock(c){return '<div class="code"><button class="ibtn" data-a="copy" data-v="'+esc(c)+'" aria-label="Copy code">'+ic('copy',17)+'</button><pre>'+esc(c)+'</pre></div>'}
 
 function sidebar(){
@@ -203,7 +206,7 @@ function dashboard(){
  var pg=S.page,tt=TITLES[pg],body='';
  if(pg==='Inbox')body=stats()+inbox();else if(pg==='Overview')body=stats()+overview();else if(pg==='Forms')body=formsPage();else if(pg==='Deliveries')body=deliveries();else if(pg==='Usage & billing')body=billing();else if(pg==='Settings')body=settings();else body=docs();
  var hasActs=['Inbox','Forms','Overview'].indexOf(pg)>-1;
- return '<div class="shell">'+sidebar()+'<main class="main"><header class="top"><button class="ibtn burger" aria-label="Open navigation" data-a="navopen">'+ic('menu')+'</button><span class="crumb">Workspace<i>/</i><b>'+pg+'</b></span><span class="grow"></span><span class="live"><i></i><span class="t">Workspace</span></span><button class="ibtn" aria-label="Open documentation" data-a="nav" data-v="Documentation">'+ic('book',18)+'</button><div class="account-actions" data-account-actions><button class="account-profile" data-a="modal" data-t="profile" aria-label="Profile" aria-haspopup="dialog"><span class="account-avatar" aria-hidden="true">'+esc(ini(S.set.name||'User'))+'</span><span>Profile</span></button><button class="account-signout" data-a="modal" data-t="signout" aria-haspopup="dialog">Sign out</button></div></header>'+
+ return '<div class="shell">'+sidebar()+'<main class="main"><header class="top"><button class="ibtn burger" aria-label="Open navigation" data-a="navopen">'+ic('menu')+'</button><span class="crumb">Workspace<i>/</i><b>'+pg+'</b></span><span class="grow"></span><span class="live"><i></i><span class="t">Workspace</span></span><button class="ibtn" aria-label="Open documentation" data-a="nav" data-v="Documentation">'+ic('book',18)+'</button><div class="account-actions" data-account-actions>'+themeButton()+'<button class="account-profile" data-a="modal" data-t="profile" aria-label="Profile" aria-haspopup="dialog"><span class="account-avatar" aria-hidden="true">'+esc(ini(S.set.name||'User'))+'</span><span>Profile</span></button><button class="account-signout" data-a="modal" data-t="signout" aria-haspopup="dialog">Sign out</button></div></header>'+
  '<div class="wrap"><div class="head"><div><h1>'+tt[0]+'</h1><p>'+tt[1]+'</p></div>'+(hasActs?'<div class="acts"><button class="btn" data-a="export">'+ic('dl',17)+'Export</button><button class="btn pri" data-a="modal" data-t="create">'+ic('plus',19)+'Create form</button></div>':'')+'</div>'+body+
  '<footer class="foot"><span>© '+new Date().getFullYear()+' Pentreeform</span><a href="https://www.beepeelabs.cv/" target="_blank" rel="noreferrer">Built by BeepeeLabs '+ic('ur',13)+'</a><button data-a="modal" data-t="privacy">Data & privacy</button></footer></div></main></div>';
 }
@@ -218,7 +221,7 @@ function auth(){
  if(need)f+='<label class="sec"><input type="checkbox" data-sec'+(S.tok?' checked':'')+'>Confirm you are human</label>';
  var lbl=v?'Resend verification':{login:'Sign in',register:'Create account',forgot:'Send reset link',resend:'Send verification link',reset:'Update password'}[m];
  var links=v?'<button data-a="screen" data-v="login">'+ic('out',14)+'Sign out</button>':(m==='login'?'<button data-a="mode" data-v="register">Create an account</button><button data-a="mode" data-v="forgot">Forgot password?</button><button data-a="mode" data-v="resend">Resend verification</button>':'<button data-a="mode" data-v="login">Back to sign in</button>');
- return '<div class="auth"><section class="story">'+logo()+'<div><h1>Your website enquiries.<br>All accounted for.</h1><p>Connect your form, keep every message, and see what happened to the notification.</p><div class="prom">'+ic('shieldc',20)+'<span>Saved first. Sent second.</span></div></div><button class="demo" data-a="screen" data-v="dashboard">Open dashboard '+ic('right',17)+'</button></section>'+
+ return '<div class="auth"><div class="auth-theme">'+themeButton()+'</div><section class="story">'+logo()+'<div><h1>Your website enquiries.<br>All accounted for.</h1><p>Connect your form, keep every message, and see what happened to the notification.</p><div class="prom">'+ic('shieldc',20)+'<span>Saved first. Sent second.</span></div></div><button class="demo" data-a="screen" data-v="dashboard">Open dashboard '+ic('right',17)+'</button></section>'+
  '<section class="amain"><div class="acard"><span class="eyebrow">PENTREEFORM</span><h2>'+title+'</h2><p>'+sub+'</p>'+(S.amsg?'<div role="status" class="amsg ok">'+esc(S.amsg)+'</div>':'')+
  (!v&&['login','register'].indexOf(m)>-1?'<div class="social-auth"><button type="button" class="btn google-btn" data-a="google-preview">'+GOOGLE_ICON+'Continue with Google</button><div class="auth-divider">or continue with email</div></div>':'')+'<form data-f="auth">'+f+'<button class="btn pri asub" type="submit"'+((need&&!S.tok)?' disabled':'')+'>'+lbl+ic('right',17)+'</button></form><div class="links">'+links+'</div></div><p class="credit">Built by <a href="https://www.beepeelabs.cv/" target="_blank" rel="noreferrer">BeepeeLabs</a></p></section></div>';
 }
@@ -264,6 +267,7 @@ var R=host;
 listen(R,'click',function(e){
  var t=e.target.closest('[data-a]');if(!t)return;
  var a=t.getAttribute('data-a'),v=t.getAttribute('data-v');
+ if(a==='theme'){toggleTheme();return}
  if(L&&liveClick(e,t,a,v))return;
  if(a==='mbclose'){if(e.target!==t)return;S.modal=null;return render()}
  switch(a){
