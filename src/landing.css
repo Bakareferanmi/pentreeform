@@ -153,3 +153,45 @@
  .pf-public .pf-footer{width:auto;align-self:stretch}
  .pf-footer nav{gap:24px}
 }
+
+/* Read the setup at a glance on small screens; copying always includes every line. */
+.pf-code-expand{display:none}
+@media(max-width:540px){
+ .pf-code-card:not(.is-expanded) pre{max-height:168px;overflow-y:hidden;mask-image:linear-gradient(#000 68%,transparent)}
+ .pf-code-expand{display:flex;align-items:center;justify-content:center;min-height:48px;width:100%;padding:12px 18px;border-top:1px solid #63526f;background:#342044;color:#f8f2ff;font:700 14px var(--body)}
+ .pf-code-expand:hover{background:#482b60}
+}
+/* Walkthrough stages share a visible focus with the matching product surface. */
+.pf-walkthrough-steps{display:flex;justify-content:center;gap:10px;max-width:600px;margin:28px auto 0;padding:0 20px}
+.pf-walkthrough-steps button{display:flex;align-items:center;justify-content:center;gap:7px;min-height:44px;border:1px solid #b5a2ce;border-radius:12px;background:#fff;color:#584067;padding:9px 14px;font:600 13px var(--body)}
+.pf-step-number{font-size:11px;color:#695278}
+.pf-walkthrough-steps button[aria-pressed=true]{background:#ede0ff;color:#4e139f;border-color:#6020c8;box-shadow:0 0 0 1px #6020c8}
+.pf-form-card,.pf-phone,.pf-notification{transition:box-shadow .4s,border-color .4s,background .4s}
+.pf-form-card.is-active,.pf-notification.is-active{border-color:#6020c8;box-shadow:0 0 0 3px #dfc9fc,0 18px 40px -24px #56268a}
+.pf-phone.is-active{box-shadow:0 0 0 4px #dcc2fb,0 30px 70px -35px #3c136d,0 12px 30px -20px #28113c}
+.pf-notification.received{background:#f8f2ff;border-color:#6020c8}
+.pf-notification.received .pf-notify-icon{background:#6020c8;color:#fff}
+/* Each plan exposes its limits and its own account entry point. */
+.pf-price-grid{overflow:visible;border-color:#b5a2ce}
+.pf-price{padding:26px 20px;display:flex;flex-direction:column;align-items:stretch;min-width:0}
+.pf-price:first-child{border-radius:19px 0 0 19px}.pf-price:last-child{border-radius:0 19px 19px 0}
+.pf-price-featured{background:#f4ecff}
+.pf-price h3{font-size:16px;color:#3c2154}
+.pf-price ul{list-style:none;text-align:left;display:grid;gap:12px;margin:18px 0 24px;padding:0;flex:1}
+.pf-price li{display:flex;align-items:flex-start;gap:7px;line-height:1.5}
+.pf-price li svg{flex-shrink:0;margin-top:3px;color:#6020c8}
+.pf-price li span{font-size:13px;color:#51405f}
+.pf-price li b{font-weight:700;color:#342242}
+.pf-price>a{min-height:46px;font-size:13px;padding:10px 8px}
+@media(max-width:800px){.pf-price{padding:24px 12px}.pf-price li{gap:5px}.pf-price li svg{width:14px}}
+@media(max-width:540px){
+ .pf-walkthrough-steps{gap:7px;padding:0 16px}
+ .pf-walkthrough-steps button{padding:9px 10px;gap:5px;font-size:12px}
+ .pf-walkthrough-steps button>svg{display:none}
+ .pf-price{padding:24px 14px}
+ .pf-price:first-child{border-radius:19px 0 0 0}.pf-price:nth-child(2){border-radius:0 19px 0 0}.pf-price:nth-child(3){border-radius:0 0 0 19px}.pf-price:last-child{border-radius:0 0 19px 0}
+ .pf-price strong{font-size:34px}
+ .pf-price li span{font-size:12px}
+ .pf-price>a{font-size:12px;padding:10px 4px}
+}
+@media(prefers-reduced-motion:reduce){.pf-form-card,.pf-phone,.pf-notification{transition:none}}

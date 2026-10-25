@@ -64,7 +64,23 @@ var SET0={name:'Feranmi',workspace:'BeepeeLabs',email:'hello@example.com'};
 var PLANS=[{n:'Free',p:0,l:100,f:2,h:'30 days'},{n:'Starter',p:3,l:1000,f:5,h:'6 months'},{n:'Pro',p:7,l:5000,f:20,h:'12 months'},{n:'Agency',p:15,l:15000,f:50,h:'12 months'}];
 var NAV=[['Overview','home'],['Forms','file'],['Inbox','inbox'],['Deliveries','send'],['Usage & billing','chart'],['Settings','settings'],['Documentation','book']];
 var TITLES={'Inbox':['Your inbox','Every submission, in one place.'],'Forms':['Your forms','A home for every form on your website.'],'Overview':['Workspace overview','A clear view of what’s coming in.'],'Deliveries':['Email deliveries','See what happened after a submission was saved.'],'Usage & billing':['Simple plans. Room to grow.','Start free. Upgrade when your forms get busier.'],'Settings':['Workspace settings','Make this workspace yours.'],'Documentation':['Connect your first form','Keep your form. Change where it submits.']};
-var DLV={delivered:'Email delivered',failed:'Notification failed',blocked:'Held as spam'};
+var DELIVERY_STATES={
+ delivered:{label:'Email delivered',tone:'success',icon:'check',note:'Delivered to the recipient’s mail server. Inbox placement is not guaranteed.'},
+ accepted:{label:'Email accepted',tone:'pending',icon:'clock',note:'The email service accepted this notification. Delivery has not been confirmed.'},
+ queued:{label:'Email queued',tone:'pending',icon:'clock',note:'Waiting to send. Temporary sending failures are retried automatically.'},
+ sending:{label:'Email sending',tone:'pending',icon:'clock',note:'The notification is being sent to the email service.'},
+ failed:{label:'Email failed',tone:'danger',icon:'alert',note:'This notification could not be sent. Your submission is still saved.'},
+ bounced:{label:'Email bounced',tone:'danger',icon:'alert',note:'The recipient’s mail server rejected this notification.'},
+ complained:{label:'Spam complaint',tone:'danger',icon:'shield',note:'The recipient marked an email as spam. Further notifications are suppressed.'},
+ suppressed:{label:'Email suppressed',tone:'danger',icon:'shield',note:'Sending was stopped after a previous bounce or spam complaint.'},
+ cancelled:{label:'Email cancelled',tone:'neutral',icon:'x',note:'The notification was cancelled. Check whether the submission was removed or marked as spam.'},
+ blocked:{label:'Held as spam',tone:'warning',icon:'shield',note:'This notification was held as spam.'},
+ 'not-connected':{label:'Email not connected',tone:'neutral',icon:'mail',note:'Connect email notifications before expecting delivery.'}
+};
+function deliveryInfo(state){return DELIVERY_STATES[state]||{label:'Status unavailable',tone:'neutral',icon:'alert',note:'No confirmed email delivery status is available.'}}
+function deliveryBadge(state){var info=deliveryInfo(state);return '<span class="status-pill '+info.tone+'" data-delivery-state="'+esc(state||'unknown')+'">'+ic(info.icon,14)+'<span>'+info.label+'</span></span>'}
+function messageBadge(message){var state=message.spam?'spam':message.read?'read':'unread';return '<span class="message-state '+state+'" data-message-state="'+state+'">'+ic(message.spam?'shield':message.read?'check':'mail',14)+'<span>'+({spam:'Spam',read:'Read',unread:'Unread'})[state]+'</span></span>'}
+
 
 function load(k,d){if(L)return d;try{var v=JSON.parse(localStorage.getItem('pentreeform:'+k));return v==null?d:v}catch(e){return d}}
 function save(k,v){try{localStorage.setItem('pentreeform:'+k,JSON.stringify(v))}catch(e){}}
@@ -128,17 +144,17 @@ function inbox(){
  '<div class="tabs">'+['All','Unread','Spam'].map(function(t){return '<button class="'+(S.tab===t?'on':'')+'" data-a="tab" data-v="'+t+'">'+t+(t==='Unread'?'<span>'+ur+'</span>':'')+'</button>'}).join('')+
  (S.chk.length?'<button class="bulk" data-a="bulk">'+ic('cc',16)+'Read ('+S.chk.length+')</button>':'')+'</div><div class="list">'+
  (list.length?list.map(function(m){return '<div class="row'+(S.sel===m.id?' sel':'')+(m.read?'':' unread')+'"><input type="checkbox" class="cb" aria-label="Select '+esc(m.name)+'" data-k="'+m.id+'"'+(S.chk.indexOf(m.id)>-1?' checked':'')+'>'+
-  '<button class="open" data-a="open" data-v="'+m.id+'"><span class="'+avc(m.name)+'">'+esc(ini(m.name))+'</span><span class="rb"><span class="rt"><strong>'+esc(m.name)+'</strong><small>'+rel(m.date)+'<span class="dot '+m.delivery+'" title="'+m.delivery+'"></span></small></span><div class="subj">'+esc(m.subject)+'</div><div class="snip">'+esc(m.message)+'</div>'+badge(esc(formName(m.formId)),m.formId.indexOf('newsletter')>-1?'g':'')+'</span></button></div>'}).join(''):
+  '<button class="open" data-a="open" data-v="'+m.id+'"><span class="'+avc(m.name)+'">'+esc(ini(m.name))+'</span><span class="rb"><span class="rt"><strong>'+esc(m.name)+'</strong><small>'+rel(m.date)+'</small></span><div class="subj">'+esc(m.subject)+'</div><div class="snip">'+esc(m.message)+'</div><span class="message-statuses">'+messageBadge(m)+deliveryBadge(m.delivery)+'</span>'+badge(esc(formName(m.formId)),m.formId.indexOf('newsletter')>-1?'g':'')+'</span></button></div>'}).join(''):
   '<div class="empty"><div class="ei">'+ic('inbox',28)+'</div><h3>No submissions here</h3><p>Try another search or filter.</p><button class="btn" data-a="clear">Clear filters</button></div>')+
  '</div></div><div class="dp">'+(cur?detail(cur):'<div class="empty"><div class="ei">'+ic('mail',28)+'</div><h3>Select a submission</h3><p>Its details will appear here.</p></div>')+'</div></section>';
  return h;
 }
 function detail(m){
- var d=m.delivery,cls=d==='delivered'?'':d==='failed'?'w':d==='blocked'?'w':'n';
- return '<button class="back btn sm" data-a="back">'+ic('left',16)+'Back to inbox</button><div class="dh"><h2>'+esc(m.subject)+'</h2><button class="ibtn bd" title="'+(m.read?'Mark unread':'Mark read')+'" aria-label="'+(m.read?'Mark unread':'Mark read')+'" data-a="toggleread" data-v="'+m.id+'">'+ic('mail',18)+'</button><button class="ibtn bd" aria-label="More message actions" data-a="modal" data-t="actions" data-v="'+m.id+'">'+ic('dots',20)+'</button></div>'+badge(esc(formName(m.formId)))+
+ var d=m.delivery,info=deliveryInfo(d);
+ return '<button class="back btn sm" data-a="back">'+ic('left',16)+'Back to inbox</button><div class="dh"><h2>'+esc(m.subject)+'</h2><button class="ibtn bd" title="'+(m.read?'Mark unread':'Mark read')+'" aria-label="'+(m.read?'Mark unread':'Mark read')+'" data-a="toggleread" data-v="'+m.id+'">'+ic('mail',18)+'</button><button class="ibtn bd" aria-label="More message actions" data-a="modal" data-t="actions" data-v="'+m.id+'">'+ic('dots',20)+'</button></div>'+badge(esc(formName(m.formId)))+'<div class="message-flags">'+messageBadge(m)+'</div>'+
  '<div class="ds"><span class="'+avc(m.name)+'">'+esc(ini(m.name))+'</span><div><strong>'+esc(m.name)+'</strong><small>'+esc(m.email)+'</small></div><time>'+new Date(m.date).toLocaleString(undefined,{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'})+'</time></div>'+
  '<dl><dt>Name</dt><dd>'+esc(m.name)+'</dd><dt>Email</dt><dd><a href="mailto:'+esc(m.email)+'">'+esc(m.email)+'</a></dd><dt>Message</dt><dd class="mbody">'+esc(m.message)+'</dd></dl>'+
- '<div class="dcard '+cls+'">'+ic('cok',24)+'<div><strong>'+(DLV[d]||'Email not connected')+'</strong><small>Delivery status</small></div><button class="btn sm" aria-label="View delivery details" data-a="nav" data-v="Deliveries">Details</button></div>'+
+ '<div class="dcard delivery-card '+info.tone+'">'+ic(info.icon,24)+'<div><strong>'+info.label+'</strong><small>' +esc(L&&m.deliveryError?m.deliveryError:info.note)+'</small></div><button class="btn sm" aria-label="View delivery details" data-a="nav" data-v="Deliveries">Details</button></div>'+
  '<a class="btn reply" href="mailto:'+esc(m.email)+'?subject='+encodeURIComponent('Re: '+m.subject)+'">'+ic('mail',17)+'Reply by email</a>';
 }
 function overview(){
@@ -155,7 +171,7 @@ function formsPage(){
 function deliveries(){
  var ns=S.msgs.filter(function(m){return !m.spam});
  return '<section class="card pad"><div class="info">'+ic('shield',20)+'<p>Track email notifications for your submissions.</p></div><div class="tw"><div class="tr h"><span>Submission</span><span>Recipient</span><span>Status</span><span>Received</span></div>'+
- ns.map(function(m){var f=S.forms.filter(function(x){return x.id===m.formId})[0];return '<button class="tr" data-a="deljump" data-v="'+m.id+'"><span><strong>'+esc(m.subject)+'</strong><small>'+esc(m.name)+'</small></span><span>'+esc(f?f.email:'—')+'</span><span>'+badge(m.delivery==='not-connected'?'Not connected':m.delivery,m.delivery==='failed'?'a':m.delivery==='delivered'?'g':'')+'</span><span>'+rel(m.date)+'</span></button>'}).join('')+'</div></section>';
+ ns.map(function(m){var f=S.forms.filter(function(x){return x.id===m.formId})[0];return '<button class="tr" data-a="deljump" data-v="'+m.id+'"><span><strong>'+esc(m.subject)+'</strong><small>'+esc(m.name)+'</small></span><span>'+esc(f?f.email:'—')+'</span><span>'+deliveryBadge(m.delivery)+'</span><span>'+rel(m.date)+'</span></button>'}).join('')+'</div></section>';
 }
 function billing(){
  return '<div class="bill"><p class="muted">Submission limits are shared across your account.</p>'+badge('Monthly plans')+'</div><section class="pricing">'+PLANS.map(function(p){var ft=p.n==='Starter';
@@ -210,12 +226,34 @@ function pbar(){
  var o=[['dashboard','Dashboard & all app pages'],['login','Sign in'],['register','Create account'],['forgot','Forgot password'],['resend','Resend verification'],['reset','Reset password'],['verify','Verify email']];
  return '<div class="pbar screen-switcher" hidden><b>Pentreeform <span>Workspace</span></b><label>Screen<select data-c="screen" aria-label="Choose account screen">'+o.map(function(x){return '<option value="'+x[0]+'"'+(S.screen===x[0]?' selected':'')+'>'+x[1]+'</option>'}).join('')+'</select></label><small>Saved first. Sent second.</small></div>';
 }
+function prepareDialog(markup){
+ if(!markup)return '';
+ var template=document.createElement('template');template.innerHTML=markup;
+ var dialog=template.content.querySelector('.modal');if(!dialog)return markup;
+ var header=dialog.querySelector('.ph');header.classList.add('modal-header');
+ var body=document.createElement('div');body.className='modal-body';
+ Array.from(dialog.children).filter(function(node){return node!==header}).forEach(function(node){body.appendChild(node)});
+ var actions=body.querySelector(':scope > .modal-actions');
+ if(actions)actions.remove();else{
+  actions=document.createElement('div');actions.className='modal-actions';
+  var form=body.querySelector('form'),submit=form&&form.querySelector(':scope > button.btn');
+  var direct=Array.from(body.children).filter(function(node){return node.matches('button.btn')});
+  if(submit){form.id='pf-dialog-form';submit.setAttribute('form',form.id);submit.remove();direct=[submit]}
+  if(direct.length){var cancel=document.createElement('button');cancel.type='button';cancel.className='btn';cancel.dataset.a='close';cancel.textContent='Cancel';actions.appendChild(cancel);direct.forEach(function(node){actions.appendChild(node)})}
+  else{var done=document.createElement('button');done.type='button';done.className='btn';done.dataset.a='close';done.textContent='Done';actions.appendChild(done)}
+ }
+ dialog.append(body,actions);return template.innerHTML;
+}
+var modalOpener=null;
 function render(){
- var a=document.activeElement,keepQ=a&&a.id==='q',pos=keepQ?a.selectionStart:0;
- host.innerHTML=pbar()+(S.screen==='dashboard'?dashboard():auth())+modalView()+(S.toast?'<div role="status" class="toast">'+ic('cok',18)+esc(S.toast)+'<button aria-label="Dismiss notification" data-a="toastx">'+ic('x',16)+'</button></div>':'');
+ var a=document.activeElement,keepQ=a&&a.id==='q',pos=keepQ?a.selectionStart:0,wasModal=!!host.querySelector('.modal');
+ if(S.modal&&!wasModal&&a&&host.contains(a))modalOpener={action:a.getAttribute('data-a'),type:a.getAttribute('data-t'),value:a.getAttribute('data-v'),label:a.getAttribute('aria-label'),className:a.className};
+ host.innerHTML=pbar()+(S.screen==='dashboard'?dashboard():auth())+prepareDialog(modalView())+(S.toast?'<div role="status" class="toast">'+ic('cok',18)+esc(S.toast)+'<button aria-label="Dismiss notification" data-a="toastx">'+ic('x',16)+'</button></div>':'');
  document.title='Pentreeform · '+(S.screen==='dashboard'?S.page:'Account');
  if(keepQ){var q=document.getElementById('q');if(q){q.focus();q.setSelectionRange(pos,pos)}}
  if(S.modal){var d=host.querySelector('.modal');if(d)d.focus()}
+ else if(wasModal&&modalOpener){var opener=Array.from(host.querySelectorAll('[data-a]')).find(function(button){return button.getAttribute('data-a')===modalOpener.action&&button.getAttribute('data-t')===modalOpener.type&&button.getAttribute('data-v')===modalOpener.value&&button.getAttribute('aria-label')===modalOpener.label&&button.className===modalOpener.className});if(opener)opener.focus();modalOpener=null}
+ host.querySelectorAll('.shell,.auth,.pbar').forEach(function(node){node.inert=!!S.modal});
  document.body.style.overflow=S.modal?'hidden':oldOverflow;
 }
 function go(p){S.page=p;S.nav=false;S.detail=false;render();window.scrollTo(0,0)}
@@ -299,7 +337,7 @@ const original={sidebar,detail,inbox,overview,formsPage,deliveries,billing,setti
 function syncLive(next){L=next;if(!L)return;S.forms=L.forms;S.msgs=L.messages;S.set=L.settings;if(!S.msgs.some(m=>m.id===S.sel))S.sel=S.msgs[0]?.id||null;}
 pbar=function(){if(!L)return original.pbar();return '<div class="pbar"><b>Pentreeform <span>Live workspace</span></b><label><button data-a="refresh">Refresh</button></label><small>Saved first. Sent second.</small></div>'};
 sidebar=function(){let h=original.sidebar();if(!L)return h;h=h.replace('<strong>Starter</strong>','<strong>'+esc(L.user.plan)+' plan</strong>').replace(S.msgs.filter(m=>!m.spam).length+' / 1,000',esc(L.usage)+' / '+esc(L.limit.toLocaleString()));return h.replace(/style="width:[^\"]+"/,'style="width:'+Math.min(100,Math.max(2,L.usage/L.limit*100))+'%"')};
-detail=function(m){let h=original.detail(m);if(!L)return h;h=h.replace('Delivery status',esc(m.deliveryError||(m.delivery==='delivered'?'Delivered to the recipient’s mail server.':'Delivery does not guarantee inbox placement.'))).replace('Email not connected',esc(({queued:'Queued for sending',sending:'Sending notification',accepted:'Accepted by email service',bounced:'Email bounced',complained:'Marked as spam by recipient',suppressed:'Recipient suppressed',cancelled:'Notification cancelled'})[m.delivery]||'Email not connected'));const fields=Object.entries(m.fields||{}).filter(([key])=>!['name','email','message','subject'].includes(key));return h.replace('</dl>',fields.map(([k,v])=>'<dt>'+esc(k)+'</dt><dd>'+esc(v)+'</dd>').join('')+'</dl>')};
+detail=function(m){let h=original.detail(m);if(!L)return h;const fields=Object.entries(m.fields||{}).filter(([key])=>!['name','email','message','subject'].includes(key));return h.replace('</dl>',fields.map(([k,v])=>'<dt>'+esc(k)+'</dt><dd>'+esc(v)+'</dd>').join('')+'</dl>')};
 inbox=function(){let h=original.inbox();if(!L)return h;h=h.replace('placeholder="Search submissions"','placeholder="Search loaded submissions"');if(L.nextCursor)h=h.replace('</div></div><div class="dp">','</div><button class="btn sm" data-a="older">Load older submissions</button></div><div class="dp">');return h};
 overview=function(){const h=original.overview();return L?h.replace('Review your inbox','Your account is verified').replace('Connect your website form','Connect your website form'):h};
 formsPage=function(){let h=original.formsPage();if(!L)return h;h=h.replace(/<small>submissions<\/small>/g,'<small>loaded submissions</small>');for(const f of S.forms){const button='<button class="btn sm" data-a="testlocal" data-v="'+esc(f.id)+'">'+ic('plus',16)+'Add submission</button>';h=h.replace(button,f.active?'<button class="btn sm" data-a="modal" data-t="archive" data-v="'+esc(f.id)+'">Archive</button>':'');}let index=0;return h.replace(/<span class="badge ">Ready<\/span>/g,()=>badge(S.forms[index++]?.active?'Active':'Archived'))};
@@ -326,7 +364,7 @@ function liveClick(e,t,a,v){switch(a){
  default:return false;
 }}
 async function liveSubmit(kind,data){if(kind==='create'){await action(async()=>{try{const form=await L.createForm({name:String(data.get('name')||'').trim(),domain:String(data.get('domain')||'').trim(),email:L.user.email,redirect:data.get('redirect')||''});if(!S.forms.some(f=>f.id===form.id))S.forms=[...S.forms,form];S.modal={t:'setup',v:form.id};render()}catch(e){S.modal={t:'create',err:e.message};render()}});}else if(kind==='settings'){await action(()=>L.setSettings({name:String(data.get('name')||'').trim(),workspace:String(data.get('workspace')||'').trim(),email:L.user.email}));}}
-listen(document,'keydown',function(e){if(!S.modal||e.key!=='Tab')return;const elements=host.querySelector('.modal')?.querySelectorAll('button,input,select,textarea,a[href]');if(!elements?.length)return;const first=elements[0],last=elements[elements.length-1];if(e.shiftKey&&(document.activeElement===first||document.activeElement===host.querySelector('.modal'))){e.preventDefault();last.focus()}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus()}});
+listen(document,'keydown',function(e){if(!S.modal||e.key!=='Tab')return;const elements=host.querySelector('.modal')?.querySelectorAll('button:not([disabled]),input:not([disabled]):not([type=hidden]),select:not([disabled]),textarea:not([disabled]),a[href]');if(!elements?.length)return;const first=elements[0],last=elements[elements.length-1];if(e.shiftKey&&(document.activeElement===first||document.activeElement===host.querySelector('.modal'))){e.preventDefault();last.focus()}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus()}});
 syncLive(L);render();
 return {update(next){if(disposed)return;if(next){syncLive(next);render()}},destroy(){disposed=true;clearTimeout(toastT);for(const remove of listeners)remove();document.body.style.overflow=oldOverflow;host.replaceChildren()}};
 
