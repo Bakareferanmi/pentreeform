@@ -1,3 +1,4 @@
+import {usageSummary} from '../shared/usage.js';
 import {getTheme,toggleTheme,themeLabel,THEME_EVENT} from './theme.js';
 import {BRAND_ICON} from './brand.js';
 import {GOOGLE_ICON} from './google-brand.js';
@@ -129,6 +130,15 @@ function sidebar(){
  '<button class="me" data-a="modal" data-t="profile" aria-label="Open profile" aria-haspopup="dialog"><span class="'+avc(S.set.name||'U')+'">'+esc(ini(S.set.name||'User'))+'</span><div><strong>'+esc(S.set.name)+'</strong><small>'+esc(S.set.email)+'</small></div>'+ic('down',16)+'</button></div></aside>';
 }
 
+function monthlyUsage(){return usageSummary(L?L.usage:S.msgs.filter(function(m){return !m.spam&&m.date.slice(0,7)===new Date().toISOString().slice(0,7)}).length,L?L.limit:1000,L?.usageMonth||new Date().toISOString().slice(0,7))}
+function usageProgress(usage){return '<div class="usage-progress" role="progressbar" aria-label="Monthly submission usage" aria-valuemin="0" aria-valuemax="'+usage.limit+'" aria-valuenow="'+Math.min(usage.used,usage.limit)+'" aria-valuetext="'+usage.used.toLocaleString()+' of '+usage.limit.toLocaleString()+' submissions used"><i style="width:'+usage.progress+'%"></i></div>'}
+function usageReset(usage){return new Date(usage.resetAt).toLocaleDateString(undefined,{day:'numeric',month:'short',timeZone:'UTC'})+' (UTC)'}
+function usageAlert(){
+ var usage=monthlyUsage();if(!usage||!usage.level)return '';
+ var title=usage.level===100?'Monthly submission limit reached':usage.level===95?'You’re close to your monthly limit':usage.percent+'% of your monthly submissions used';
+ return '<section class="usage-alert '+(usage.level>=95?'critical':'warning')+'" data-usage-level="'+usage.level+'" role="'+(usage.level===100?'alert':'status')+'" aria-label="Monthly usage warning">'+ic('alert',24)+'<div><h2>'+title+'</h2><p>'+usage.used.toLocaleString()+' of '+usage.limit.toLocaleString()+' used · '+usage.remaining.toLocaleString()+' remaining. Resets '+usageReset(usage)+'.</p>'+(usage.level===100?'<p>New submissions won’t be saved while your account is at its limit.</p>':'')+'</div><button class="btn" data-a="nav" data-v="Usage & billing">View usage</button></section>';
+}
+function usageCard(){var usage=monthlyUsage();if(!usage)return '';return '<section class="card usage-card" data-usage-level="'+usage.level+'" aria-labelledby="usage-heading"><div class="ph"><h2 id="usage-heading">This month’s submissions</h2><span class="usage-percent">'+usage.percent+'%</span></div><p><strong>'+usage.used.toLocaleString()+'</strong> / '+usage.limit.toLocaleString()+' used</p>'+usageProgress(usage)+'<div class="usage-foot"><span>'+usage.remaining.toLocaleString()+' remaining across all forms</span><span>Resets '+usageReset(usage)+'</span></div></section>'}
 function stats(){
  var ns=S.msgs.filter(function(m){return !m.spam}),un=ns.filter(function(m){return !m.read}).length,
  del=ns.filter(function(m){return m.delivery==='delivered'}).length,att=needAtt().length;
@@ -177,7 +187,7 @@ function deliveries(){
  ns.map(function(m){var f=S.forms.filter(function(x){return x.id===m.formId})[0];return '<button class="tr" data-a="deljump" data-v="'+m.id+'"><span><strong>'+esc(m.subject)+'</strong><small>'+esc(m.name)+'</small></span><span>'+esc(f?f.email:'—')+'</span><span>'+deliveryBadge(m.delivery)+'</span><span>'+rel(m.date)+'</span></button>'}).join('')+'</div></section>';
 }
 function billing(){
- return '<div class="bill"><p class="muted">Submission limits are shared across your account.</p>'+badge('Monthly plans')+'</div><section class="pricing">'+PLANS.map(function(p){var ft=p.n==='Starter';
+ return '<div class="bill"><p class="muted">Submission limits are shared across your account.</p>'+badge('Monthly plans')+'</div>'+usageCard()+'<section class="pricing">'+PLANS.map(function(p){var ft=p.n==='Starter';
   return '<article class="card pc'+(ft?' ft':'')+'"><div class="ph" style="margin:0"><h2>'+p.n+'</h2>'+(ft?badge('Start here'):'')+'</div><div class="price">$'+p.p+'<small>/ month</small></div><p class="muted">'+p.l.toLocaleString()+' submissions / month</p><ul><li>'+ic('check',17)+p.f+' active forms</li><li>'+ic('check',17)+p.h+' message history</li><li>'+ic('check',17)+'Email notifications</li><li>'+ic('check',17)+'Spam protection</li><li>'+ic('check',17)+'Delivery status</li>'+(p.p?'<li>'+ic('check',17)+'CSV exports &amp; custom redirects</li>':'')+'</ul><button class="btn'+(ft?' pri':'')+'" data-a="plan">'+(p.p?'Choose '+p.n:'Start free')+ic('ur',16)+'</button></article>'}).join('')+'</section><p class="muted">Prices are in USD, billed monthly.</p>';
 }
 function settings(){
@@ -207,7 +217,7 @@ function dashboard(){
  if(pg==='Inbox')body=stats()+inbox();else if(pg==='Overview')body=stats()+overview();else if(pg==='Forms')body=formsPage();else if(pg==='Deliveries')body=deliveries();else if(pg==='Usage & billing')body=billing();else if(pg==='Settings')body=settings();else body=docs();
  var hasActs=['Inbox','Forms','Overview'].indexOf(pg)>-1;
  return '<div class="shell">'+sidebar()+'<main class="main"><header class="top"><button class="ibtn burger" aria-label="Open navigation" data-a="navopen">'+ic('menu')+'</button><span class="crumb">Workspace<i>/</i><b>'+pg+'</b></span><span class="grow"></span><span class="live"><i></i><span class="t">Workspace</span></span><button class="ibtn" aria-label="Open documentation" data-a="nav" data-v="Documentation">'+ic('book',18)+'</button><div class="account-actions" data-account-actions>'+themeButton()+'<button class="account-profile" data-a="modal" data-t="profile" aria-label="Profile" aria-haspopup="dialog"><span class="account-avatar" aria-hidden="true">'+esc(ini(S.set.name||'User'))+'</span><span>Profile</span></button><button class="account-signout" data-a="modal" data-t="signout" aria-haspopup="dialog">Sign out</button></div></header>'+
- '<div class="wrap"><div class="head"><div><h1>'+tt[0]+'</h1><p>'+tt[1]+'</p></div>'+(hasActs?'<div class="acts"><button class="btn" data-a="export">'+ic('dl',17)+'Export</button><button class="btn pri" data-a="modal" data-t="create">'+ic('plus',19)+'Create form</button></div>':'')+'</div>'+body+
+ '<div class="wrap"><div class="head"><div><h1>'+tt[0]+'</h1><p>'+tt[1]+'</p></div>'+(hasActs?'<div class="acts"><button class="btn" data-a="export">'+ic('dl',17)+'Export</button><button class="btn pri" data-a="modal" data-t="create">'+ic('plus',19)+'Create form</button></div>':'')+'</div>'+usageAlert()+body+
  '<footer class="foot"><span>© '+new Date().getFullYear()+' Pentreeform</span><a href="https://www.beepeelabs.cv/" target="_blank" rel="noreferrer">Built by BeepeeLabs '+ic('ur',13)+'</a><button data-a="modal" data-t="privacy">Data & privacy</button></footer></div></main></div>';
 }
 function auth(){
@@ -340,7 +350,7 @@ function exportCSV(){if(L){L.exportCSV({form:S.ff,days:S.df,tab:S.tab,q:S.q});re
 const original={sidebar,detail,inbox,overview,formsPage,deliveries,billing,settings,docs,modalView,pbar,dashboard};
 function syncLive(next){L=next;if(!L)return;S.forms=L.forms;S.msgs=L.messages;S.set=L.settings;if(!S.msgs.some(m=>m.id===S.sel))S.sel=S.msgs[0]?.id||null;}
 pbar=function(){if(!L)return original.pbar();return '<div class="pbar"><b>Pentreeform <span>Live workspace</span></b><label><button data-a="refresh">Refresh</button></label><small>Saved first. Sent second.</small></div>'};
-sidebar=function(){let h=original.sidebar();if(!L)return h;h=h.replace('<strong>Starter</strong>','<strong>'+esc(L.user.plan)+' plan</strong>').replace(S.msgs.filter(m=>!m.spam).length+' / 1,000',esc(L.usage)+' / '+esc(L.limit.toLocaleString()));return h.replace(/style="width:[^\"]+"/,'style="width:'+Math.min(100,Math.max(2,L.usage/L.limit*100))+'%"')};
+sidebar=function(){let h=original.sidebar();if(!L)return h;const usage=monthlyUsage();h=h.replace('<strong>Starter</strong>','<strong>'+esc(L.user.plan)+' plan</strong>').replace(S.msgs.filter(m=>!m.spam).length+' / 1,000',esc(L.usage)+' / '+esc(L.limit.toLocaleString()));if(!usage)return h;h=h.replace('class="plan"','class="plan" data-usage-level="'+usage.level+'" aria-label="Usage: '+usage.used.toLocaleString()+' of '+usage.limit.toLocaleString()+' submissions this month"');return h.replace(/style="width:[^\"]+"/,'style="width:'+usage.progress+'%"')};
 detail=function(m){let h=original.detail(m);if(!L)return h;const fields=Object.entries(m.fields||{}).filter(([key])=>!['name','email','message','subject'].includes(key));return h.replace('</dl>',fields.map(([k,v])=>'<dt>'+esc(k)+'</dt><dd>'+esc(v)+'</dd>').join('')+'</dl>')};
 inbox=function(){let h=original.inbox();if(!L)return h;h=h.replace('placeholder="Search submissions"','placeholder="Search loaded submissions"');if(L.nextCursor)h=h.replace('</div></div><div class="dp">','</div><button class="btn sm" data-a="older">Load older submissions</button></div><div class="dp">');return h};
 overview=function(){const h=original.overview();return L?h.replace('Review your inbox','Your account is verified').replace('Connect your website form','Connect your website form'):h};

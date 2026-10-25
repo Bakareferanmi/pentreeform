@@ -14,6 +14,7 @@ The UI is imported from the supplied `design/Pentreeform_Redesign.html`. Its CSS
 - Turnstile, honeypot, rate limits, request-size limits, and submission idempotency
 - Atomic account-wide monthly submission quotas and active form limits in SQLite triggers
 - Submission storage and durable email outbox created together, before email is sent
+- Account-wide usage warnings at 80% and 95%, remaining allowance and UTC reset dates, and deduplicated threshold emails (requires migration `0003_usage_alerts.sql`)
 - Bounded retries with stable Resend idempotency keys, signed delivery events, bounce/complaint suppression
 - Free/paid retention, cursor pagination, read/unread, spam, deletion, and paid CSV export
 - Paystack monthly plan checkout, server-verified payments, signed webhooks, duplicate protection, subscription management

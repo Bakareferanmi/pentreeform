@@ -1,4 +1,4 @@
-import {now,uid,query,fetchProvider,svixOK,body,fail,json} from './core.js';
+import {PLANS,effectivePlan,now,uid,query,fetchProvider,svixOK,body,fail,json} from './core.js';
 export function job(env,{userId,submissionId=null,recipient,kind,payload}){return query(env,'INSERT INTO outbox(id,user_id,submission_id,recipient,payload,kind,available_at,created_at) VALUES(?,?,?,?,?,?,?,?)',uid(),userId,submissionId,recipient,JSON.stringify(payload),kind,now(),now())}
 export async function reconcile(env){
  // Store signed events independently: provider callbacks may arrive before the send response.
@@ -13,6 +13,11 @@ export async function drain(env,limit=10){
  const claim=await query(env,`UPDATE outbox SET state='sending',lease_until=?,attempts=attempts+1 WHERE id=? AND (state='queued' OR (state='sending' AND lease_until<?)) RETURNING id`,now()+120,j.id,now()).first();if(!claim)continue;
  try{
  const suppressed=await query(env,'SELECT email FROM suppressions WHERE email=?',j.recipient).first();if(suppressed){await query(env,"UPDATE outbox SET state='suppressed',payload='',error='Recipient suppressed after a bounce or complaint' WHERE id=?",j.id).run();continue}
+ if(/^usage-(80|95)$/.test(j.kind)){
+ const alert=await query(env,'SELECT a.month,a.quota,a.threshold,u.plan,u.paid_until,u.email,u.verified,m.count FROM usage_alerts a JOIN users u ON u.id=a.user_id LEFT JOIN monthly_usage m ON m.user_id=a.user_id AND m.month=a.month WHERE a.outbox_id=?',j.id).first();
+ const current=alert&&alert.verified&&alert.email===j.recipient&&alert.month===new Date().toISOString().slice(0,7)&&PLANS[effectivePlan(alert)].limit===alert.quota&&alert.count>=Math.ceil(alert.quota*alert.threshold/100)&&(alert.threshold===95||alert.count<Math.ceil(alert.quota*.95));
+ if(!current){await query(env,"UPDATE outbox SET state='cancelled',payload='',lease_until=0,error='Usage alert is no longer current' WHERE id=?",j.id).run();continue}
+ }
  const linked=j.submission_id?await query(env,'SELECT spam FROM submissions WHERE id=?',j.submission_id).first():null;
  if(j.submission_id&&(!linked||linked.spam)){await query(env,"UPDATE outbox SET state='cancelled',payload='' WHERE id=?",j.id).run();continue}
  // Refuse to resend after the provider's idempotency window has elapsed.
