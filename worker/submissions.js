@@ -1,7 +1,7 @@
 import {PLANS,now,uid,hash,query,origin,text,email,fail,json,readJSON,body,rate,effectivePlan} from './core.js';
 import {challenge} from './auth.js';
-import {job} from './mail.js';
-import {usageAlertStatements} from './usage.js';
+import {submissionForm,submissionFields,saveSubmission,savedResponse,submissionError,approvedOrigin} from './submission-core.js';
+import {beginHostedVerification} from './hosted-verification.js';
 export function formJSON(f,u,env){return {id:f.id,name:f.name,domain:f.domain,redirect:f.redirect,email:u.email,active:!!f.active,endpoint:`${origin(env)}/f/${f.id}`}}
 export async function createForm(req,env,u){const d=await readJSON(req);let host;try{const url=new URL(String(d.domain).includes('://')?d.domain:'https://'+d.domain);if(url.protocol!=='https:'||!url.hostname.includes('.')||url.username||url.password||url.port)throw 0;host=url.hostname}catch{fail(400,'Enter a valid HTTPS website domain.');}
  const name=text(d.name,80);if(!name)fail(400,'Enter a form name.');
@@ -10,9 +10,10 @@ export async function createForm(req,env,u){const d=await readJSON(req);let host
  let redirect='';if(d.redirect){if(effectivePlan(u)==='Free')fail(403,'Custom redirects require a paid plan.');try{const url=new URL(d.redirect);if(url.protocol!=='https:'||url.hostname!==host||url.username||url.password)throw 0;redirect=url.href}catch{fail(400,'Redirect must be an HTTPS URL on your approved website domain.')}}
  const f={id:uid(),name,domain:host,redirect,active:1};await query(env,'INSERT INTO forms(id,user_id,name,domain,redirect,created_at) VALUES(?,?,?,?,?,?)',f.id,u.id,name,host,redirect,now()).run();return json({form:formJSON(f,u,env)},201);
 }
-function cors(req,host){const incoming=req.headers.get('origin');try{const url=new URL(incoming);if(url.protocol==='https:'&&url.hostname===host&&!url.port)return {'Access-Control-Allow-Origin':url.origin,'Access-Control-Allow-Methods':'POST, OPTIONS','Access-Control-Allow-Headers':'Content-Type, Idempotency-Key','Vary':'Origin'}}catch{}return {}}
+function cors(req,host){const allowed=approvedOrigin(req.headers.get('origin'),host);return allowed?{'Access-Control-Allow-Origin':allowed,'Access-Control-Allow-Methods':'POST, OPTIONS','Access-Control-Allow-Headers':'Content-Type, Idempotency-Key','Vary':'Origin'}:{}}
+
 export async function submit(req,env,id){
- const f=await query(env,'SELECT f.*,u.email recipient,u.verified,u.plan,u.paid_until FROM forms f JOIN users u ON u.id=f.user_id WHERE f.id=? AND f.active=1',id).first();if(!f||!f.verified)fail(404,'Form not found.');const headers=cors(req,f.domain);
+ const f=await submissionForm(env,id);const headers=cors(req,f.domain);
  if(req.method==='OPTIONS'){if(!headers['Access-Control-Allow-Origin'])fail(403,'Website origin not allowed.');return new Response(null,{status:204,headers})}
  if(req.method!=='POST')fail(405,'Use POST to submit this form.');
  let requestKey=null;
@@ -27,15 +28,14 @@ export async function submit(req,env,id){
  if(text(d._gotcha))return json({ok:true},200,headers);
  requestKey=req.headers.get('idempotency-key')||d._submission_id||null;if(requestKey&&!/^[a-zA-Z0-9_-]{8,100}$/.test(requestKey))fail(400,'Invalid submission identifier.');
  if(requestKey){const existing=await query(env,'SELECT id FROM submissions WHERE form_id=? AND request_key=?',id,requestKey).first();if(existing)return json({ok:true,id:existing.id},200,headers)}
- const verified=await challenge(req,env,d['cf-turnstile-response'],'submission');if(verified.hostname!==f.domain)fail(400,'Security check hostname does not match this form.');
- const entries=Object.entries(d).filter(([k])=>!['cf-turnstile-response','_gotcha','_submission_id'].includes(k));if(entries.length>30)fail(400,'At most 30 fields are allowed.');const fields={};for(const [k,v] of entries){if(typeof v!=='string'||k.length>80||v.length>8000||['__proto__','constructor','prototype'].includes(k))fail(400,'Fields must contain plain text within the field limits.');fields[k]=v.trim()}
- if(!Object.values(fields).some(Boolean))fail(400,'The submission is empty.');let address='';if(fields.email)address=email(fields.email);
- const s={id:uid(),name:text(fields.name,120)||[text(fields.first_name,60),text(fields.last_name,60)].filter(Boolean).join(' ')||'Website visitor',email:address,subject:text(fields.subject,160)||`New ${f.name} submission`,message:text(fields.message,8000)||Object.entries(fields).map(([k,v])=>`${k}: ${v}`).join('\n'),date:now()};
- const serialized=JSON.stringify(fields);if(serialized.length>24000)fail(413,'Submission too large.');const month=new Date(s.date*1000).toISOString().slice(0,7);
- await env.DB.batch([query(env,'INSERT INTO submissions(id,form_id,user_id,name,email,subject,message,fields,created_at,month,request_key) VALUES(?,?,?,?,?,?,?,?,?,?,?)',s.id,f.id,f.user_id,s.name,s.email,s.subject,s.message,serialized,s.date,month,requestKey),job(env,{userId:f.user_id,submissionId:s.id,recipient:f.recipient,kind:'submission',payload:{subject:`[Pentreeform] ${s.subject}`,...(address?{reply_to:address}:{}),text:`${f.name}\n\n${Object.entries(fields).map(([k,v])=>`${k}: ${v}`).join('\n\n')}\n\nOpen your inbox: ${origin(env)}/`}}),...usageAlertStatements(env,{...f,id:f.user_id},month)]);
- if(req.headers.get('accept')?.includes('text/html')){const redirect=effectivePlan(f)!=='Free'?f.redirect:'';if(redirect)return new Response(null,{status:303,headers:{...headers,Location:redirect}});return new Response('<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>Message received · Pentreeform</title><body style="font:18px system-ui;padding:12vh 8vw;color:#231638"><h1>Message received.</h1><p>Your submission has been saved. You can close this page or return to the website.</p></body></html>',{headers:{...headers,'Content-Type':'text/html; charset=utf-8'}})}
- return json({ok:true,id:s.id},201,headers);
- }catch(e){if(e.message?.includes('UNIQUE constraint')&&requestKey){const old=await query(env,'SELECT id FROM submissions WHERE form_id=? AND request_key=?',id,requestKey).first();if(old)return json({ok:true,id:old.id},200,headers)}let message=e.message,status=e.status||500;if(message?.includes('SUBMISSION_LIMIT')){status=429;message='This account has reached its monthly submission limit.'}if(!e.status&&status===500)message='The submission could not be saved. Please try again.';return json({error:message},status,headers)}
+ const fields=submissionFields(d);
+ if(!d['cf-turnstile-response'])return await beginHostedVerification(req,env,f,fields,requestKey,headers);
+ // Existing direct-widget integrations remain valid during migration. New forms
+ // use Pentreeform's hosted check and need no customer-domain Turnstile setup.
+ const verified=await challenge(req,env,d['cf-turnstile-response'],'submission');if(verified.hostname!==new URL(req.headers.get('origin')).hostname)fail(400,'Security check hostname does not match this form.');
+ const saved=await saveSubmission(env,f,fields,requestKey);
+ return savedResponse(req,f,saved,headers);
+ }catch(error){return submissionError(error,headers)}
 }
 export const messageJSON=m=>({id:m.id,name:m.name,email:m.email,formId:m.form_id,subject:m.subject,message:m.message,fields:JSON.parse(m.fields),date:new Date(m.created_at*1000).toISOString(),read:!!m.is_read,spam:!!m.spam,delivery:m.delivery||'queued',deliveryError:m.delivery_error||''});
 export async function state(req,env,u){const plan=effectivePlan(u),usageMonth=new Date().toISOString().slice(0,7),cursor=new URL(req.url).searchParams.get('before');if(cursor&&!/^\d+:[a-f0-9]{32}$/.test(cursor))fail(400,'Invalid page cursor.');let extra='',args=[];if(cursor){const [date,id]=cursor.split(':');extra=' AND (s.created_at<? OR (s.created_at=? AND s.id<?))';args=[Number(date),Number(date),id]}
