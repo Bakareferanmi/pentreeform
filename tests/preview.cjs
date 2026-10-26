@@ -1,11 +1,29 @@
 const {chromium}=require('playwright');
 const assert=require('node:assert/strict');
-const path=require('node:path');
-const os=require('node:os');
-(async()=>{const browser=await chromium.launch({headless:true,args:['--no-sandbox','--single-process','--no-zygote','--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader'],...(process.env.CHROMIUM_PATH?{executablePath:process.env.CHROMIUM_PATH}:{})});const page=await browser.newPage({viewport:{width:1512,height:1050}});const errors=[];page.on('pageerror',e=>errors.push(e.message));await page.route('https://fonts.googleapis.com/**',route=>route.abort());await page.goto('http://127.0.0.1:5173/demo',{waitUntil:'domcontentloaded'});await page.getByRole('heading',{name:'Inbox',exact:true}).waitFor();await page.screenshot({path:path.join(os.tmpdir(),'pentreeform-desktop.png'),fullPage:true});
-await page.getByRole('textbox',{name:'Search submissions'}).fill('Maya');assert.equal(await page.locator('.row').count(),1);await page.locator('[data-a="open"]').click();await page.getByRole('heading',{name:'Pricing for an online store',exact:true}).waitFor();await page.getByRole('textbox',{name:'Search submissions'}).fill('');
-await page.getByRole('button',{name:'New form',exact:true}).click();await page.getByLabel('Form name',{exact:true}).fill('Test website');await page.getByLabel('Website domain',{exact:true}).fill('https://test.example.com/contact');await page.getByLabel('Notification email',{exact:true}).fill('owner@example.com');await page.getByRole('dialog').getByRole('button',{name:'New form',exact:true}).click();await page.getByRole('heading',{name:'Form setup'}).waitFor();await page.getByRole('button',{name:'Add submission'}).click();await page.getByRole('heading',{name:'Your submission is here'}).waitFor();await page.reload();await page.getByRole('button',{name:'Forms',exact:true}).click();assert.equal(await page.getByRole('heading',{name:'Test website',exact:true}).count(),1);
-await page.getByRole('button',{name:'Inbox',exact:false}).first().click();const downloadPromise=page.waitForEvent('download');await page.getByRole('button',{name:'Export',exact:true}).click();const download=await downloadPromise;assert.equal(download.suggestedFilename(),'pentreeform-submissions.csv');
-await page.setViewportSize({width:390,height:844});await page.getByRole('button',{name:'Open navigation'}).click();await page.getByRole('button',{name:'Inbox',exact:false}).first().click();assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);await page.screenshot({path:path.join(os.tmpdir(),'pentreeform-mobile.png'),fullPage:true});await page.locator('[data-a="open"]').first().click();await page.getByRole('button',{name:'Back to inbox'}).waitFor();assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);await page.getByRole('button',{name:'Back to inbox'}).click();
-for(const name of ['Overview','Forms','Deliveries','Usage & billing','Settings','Documentation']){await page.getByRole('button',{name:'Open navigation'}).click();await page.locator('nav').getByRole('button',{name,exact:true}).click();assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false,`${name} overflows on mobile`)}
-assert.deepEqual(errors,[]);console.log('PASS: search, message selection, form creation, local test submission, persistence, CSV export, mobile inbox/detail/navigation, all-page overflow, no runtime errors');await browser.close()})().catch(e=>{console.error(e);process.exit(1)});
+const path=require('node:path'),os=require('node:os');
+(async()=>{
+ const browser=await chromium.launch({headless:true,...(process.env.CHROMIUM_PATH?{executablePath:process.env.CHROMIUM_PATH}:{})});
+ try{
+  const page=await browser.newPage({viewport:{width:1512,height:1050}}),errors=[];
+  page.on('pageerror',e=>errors.push(e.message));
+  await page.route('https://fonts.googleapis.com/**',route=>route.abort());
+  await page.route('**/api/config',route=>route.fulfill({json:{registrationOpen:true,googleConfigured:false}}));
+  await page.route('**/api/auth/me',route=>route.fulfill({status:401,json:{error:'Sign in'}}));
+  const origin=process.env.PREVIEW_ORIGIN||'http://127.0.0.1:5173';
+  await page.goto(origin);await page.getByRole('heading',{name:'Your forms.One inbox.',exact:true}).waitFor();
+  assert.equal(await page.getByText('Open dashboard',{exact:true}).count(),0);
+  assert.equal(await page.locator('.pf-ctas .pf-secondary').getAttribute('href'),'/app');
+  assert.equal(await page.locator('.pf-form-card button').count(),0);
+  await page.screenshot({path:path.join(os.tmpdir(),'pentreeform-desktop.png'),fullPage:true});
+  await page.setViewportSize({width:390,height:844});
+  assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
+  for(const route of ['/demo','/demo/','/?demo=1','/?view=workspace','/#demo']){
+   await page.goto(origin+route);await page.getByRole('heading',{name:'Welcome back.',exact:true}).waitFor();
+   assert.equal(new URL(page.url()).pathname,'/app');assert.equal(await page.locator('.shell,.row,.demo,.pbar,.screen-switcher').count(),0);
+   assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
+  }
+  await page.screenshot({path:path.join(os.tmpdir(),'pentreeform-mobile.png'),fullPage:true});
+  assert.deepEqual(errors,[]);
+  console.log('PASS: landing, real account links, no fake submit controls, legacy routes require sign-in, mobile overflow, no runtime errors');
+ }finally{await browser.close()}
+})().catch(e=>{console.error(e);process.exit(1)});

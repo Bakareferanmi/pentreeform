@@ -18,9 +18,9 @@ The UI is imported from the supplied `design/Pentreeform_Redesign.html`. Its CSS
 - Bounded retries with stable Resend idempotency keys, signed delivery events, bounce/complaint suppression
 - Free/paid retention, cursor pagination, read/unread, spam, deletion, and paid CSV export
 - Paystack monthly plan checkout, server-verified payments, signed webhooks, duplicate protection, subscription management
-- Responsive app, settings, documentation, and an isolated `/demo` with fictional local data
+- Responsive authenticated workspace, settings, documentation, and lazy-loaded public pages
 
-**Implemented and tested locally; not deployed or connected to live provider accounts.** Registration defaults to closed. See [deployment instructions](docs/DEPLOYMENT.md) for what must be configured. The frontend can no longer be deployed by itself as the live product; the Worker serves both the API and built assets.
+The Vercel frontend proxies API and submission requests to the Cloudflare Worker. Registration, email, Google sign-in, and billing availability depend on the deployed provider configuration. See [deployment instructions](docs/DEPLOYMENT.md).
 
 ## Pricing
 
@@ -56,7 +56,7 @@ For UI-only development:
 npm run dev
 ```
 
-Open `/?demo=1` on the Vite URL. `/demo`, `/demo/`, and `/#demo` also open the demo. The demo skips account and backend requests. The sign-in, loading, and backend setup screens include a demo button that opens it immediately without navigating to another route.
+Open `/` for the landing page. The live workspace at `/app` requires the configured backend and a verified account. Former demo links (`/demo`, `?demo=1`, `?view=workspace`, and `#demo`) now enter `/app`; they never render a sample workspace or bypass sign-in. Unit tests retain isolated synthetic fixtures. Landing, workspace, and public-page code loads separately, using the same logo loading screen while a page bundle arrives.
 
 ## Validation
 
@@ -66,13 +66,13 @@ npm run build
 npx wrangler deploy --dry-run
 ```
 
-Tests use real SQLite with the production schema and mocked email, security, and payment providers. They cover account flows, tenant separation, CSRF, verified recipients, limits, transactional outbox, idempotency, callbacks, suppression, reset/session revocation, payment verification, CSV escaping, and real/demo frontend wiring. They do **not** prove live provider delivery, Cloudflare operation, payment acceptance, or visual correctness in real browsers.
+Tests use real SQLite with the production schema and mocked email, security, and payment providers. They cover account flows, tenant separation, CSRF, verified recipients, limits, transactional outbox, idempotency, callbacks, suppression, reset/session revocation, payment verification, CSV escaping, and authenticated routing, persistent navigation, and public-page wiring. They do **not** prove live provider delivery, Cloudflare operation, payment acceptance, or visual correctness in real browsers.
 
-Optional browser checks: start Vite on port 5173, install Chromium with `npx playwright install chromium`, then run `npm run test:ui`. These exercise `/demo`. Browser rendering was unavailable in the build environment; run them on a laptop or CI before launch.
+Optional browser checks: start Vite on port 5173, install Chromium with `npx playwright install chromium`, then run `npm run test:ui`. These check the public landing page, real sign-in links, and former demo URLs with synthetic API responses. They do not sign in to a real account.
 
 ## Notes for the operator
 
-- Use `/demo` only for fictional data. It stores sample data locally. The live app keeps its session in a cookie and loads data from D1.
+- The workspace requires sign-in, keeps its session in a cookie, and loads account data from D1. There is no public demo workspace or local sample-data fallback.
 - The inbox initially loads 100 messages. Search, filters, and summary counts cover loaded messages; load older pages as needed. CSV export streams all retained matching records from the server.
 - Notifications go only to the verified account email. Additional recipient verification and team accounts are not included yet.
 - Domain checks are defense in depth; Turnstile is mandatory on public submissions. Customer website hostnames must also be permitted in the operator's Turnstile configuration. This beta does not provision Turnstile domains automatically.

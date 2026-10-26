@@ -99,3 +99,9 @@
 .top{min-height:64px}
 :root[data-theme] :is(.main .acts,.modal>.modal-actions) .btn.quiet,:root[data-theme] .account-actions .account-signout.quiet{background:transparent;border-color:transparent;color:var(--muted)!important}
 :root[data-theme] :is(.main .acts,.modal>.modal-actions) .btn.quiet:hover,:root[data-theme] .account-actions .account-signout.quiet:hover{background:var(--surface-soft);border-color:transparent;color:var(--ink)!important}
+
+/* Content fades in place; navigation and account controls stay mounted. */
+.shell .nav button{transition:background-color 180ms ease,color 180ms ease}
+.pf-phone-nav a{display:flex;flex-direction:column;gap:4px;align-items:center;min-width:70px;min-height:44px;color:var(--muted);font-size:9px;font-weight:600}
+.pf-illustration-status{display:flex;align-items:center;justify-content:center;gap:8px;min-height:48px;color:var(--accent-text);font-weight:600}
+@media(prefers-reduced-motion:reduce){.shell .nav button{transition:none}}

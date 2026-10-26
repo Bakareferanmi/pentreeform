@@ -2,7 +2,7 @@ import {usageSummary} from '../shared/usage.js';
 import {getTheme,toggleTheme,themeLabel,THEME_EVENT} from './theme.js';
 import {BRAND_ICON,brandMotionMarkup,loadingScreenMarkup} from './brand.js';
 import {GOOGLE_ICON} from './google-brand.js';
-// Imported from the supplied design. Presentation CSS and demo markup are preserved.
+// Shared workspace presentation. Public routes always supply authenticated live data.
 export function mountRedesign(host,options={}) {
 let L=options.live||null,disposed=false;
 const listeners=[],oldOverflow=document.body.style.overflow;
@@ -219,7 +219,7 @@ function dashboard(){
  if(pg==='Inbox')body=stats(true)+inbox();else if(pg==='Overview')body=stats()+overview();else if(pg==='Forms')body=formsPage();else if(pg==='Deliveries')body=deliveries();else if(pg==='Usage & billing')body=billing();else if(pg==='Settings')body=settings();else body=docs();
  var hasActs=['Inbox','Forms','Overview'].indexOf(pg)>-1;
  return '<div class="shell">'+sidebar()+'<main class="main"><header class="top"><button class="ibtn burger" aria-label="Open navigation" data-a="navopen">'+ic('menu')+'</button><span class="grow"></span><div class="account-actions" data-account-actions>'+themeButton()+'<button class="account-profile" data-a="modal" data-t="profile" aria-label="Profile" aria-haspopup="dialog"><span class="account-avatar" aria-hidden="true">'+esc(ini(S.set.name||'User'))+'</span></button><button class="account-signout quiet" data-a="modal" data-t="signout" aria-haspopup="dialog">Sign out</button></div></header>'+
- '<div class="wrap"><div class="head"><div><h1>'+esc(pg)+'</h1></div>'+(hasActs?'<div class="acts"><button class="btn quiet" data-a="export">'+ic('dl',17)+'Export</button><button class="btn pri" data-a="modal" data-t="create">'+ic('plus',19)+'New form</button></div>':'')+'</div>'+usageAlert()+body+
+ '<div class="wrap"><div class="head"><div><h1'+(L?' tabindex="-1"':'')+'>'+esc(pg)+'</h1></div>'+(hasActs?'<div class="acts"><button class="btn quiet" data-a="export">'+ic('dl',17)+'Export</button><button class="btn pri" data-a="modal" data-t="create">'+ic('plus',19)+'New form</button></div>':'')+'</div>'+usageAlert()+body+
  '<footer class="foot"><span>© '+new Date().getFullYear()+' Pentreeform</span><a href="https://www.beepeelabs.cv/" target="_blank" rel="noreferrer">Built by BeepeeLabs '+ic('ur',13)+'</a><button data-a="modal" data-t="privacy">Data & privacy</button></footer></div></main></div>';
 }
 function auth(){
@@ -264,7 +264,8 @@ var modalOpener=null;
 function render(){
  var a=document.activeElement,keepQ=a&&a.id==='q',pos=keepQ?a.selectionStart:0,wasModal=!!host.querySelector('.modal');
  if(S.modal&&!wasModal&&a&&host.contains(a))modalOpener={action:a.getAttribute('data-a'),type:a.getAttribute('data-t'),value:a.getAttribute('data-v'),label:a.getAttribute('aria-label'),className:a.className};
- host.innerHTML=pbar()+(S.screen==='dashboard'?dashboard():auth())+prepareDialog(modalView())+(S.toast?'<div role="'+(S.toastKind==='error'?'alert':'status')+'" aria-atomic="true" class="toast pf-toast'+(S.toastKind==='error'?' is-error':'')+'">'+brandMotionMarkup(S.toastKind)+'<span class="feedback-copy">'+esc(S.toast)+'</span>'+'<button aria-label="Dismiss notification" data-a="toastx">'+ic('x',16)+'</button></div>':'');
+ const markup=pbar()+(S.screen==='dashboard'?dashboard():auth())+prepareDialog(modalView())+(S.toast?'<div role="'+(S.toastKind==='error'?'alert':'status')+'" aria-atomic="true" class="toast pf-toast'+(S.toastKind==='error'?' is-error':'')+'">'+brandMotionMarkup(S.toastKind)+'<span class="feedback-copy">'+esc(S.toast)+'</span>'+'<button aria-label="Dismiss notification" data-a="toastx">'+ic('x',16)+'</button></div>':'');
+ commitMarkup(markup);
  document.title='Pentreeform · '+(S.screen==='dashboard'?S.page:'Account');
  if(keepQ){var q=document.getElementById('q');if(q){q.focus();q.setSelectionRange(pos,pos)}}
  if(S.modal){var d=host.querySelector('.modal');if(d)d.focus()}
@@ -273,7 +274,39 @@ function render(){
  document.body.style.overflow=S.modal?'hidden':oldOverflow;
  syncPending();
 }
-function go(p){S.page=p;S.nav=false;S.detail=false;render();window.scrollTo(0,0)}
+// Preserve the shell while updating content. The mobile drawer can finish its
+// existing CSS transition instead of being replaced by a new off-screen node.
+function commitMarkup(markup){
+ const shell=host.querySelector('.shell');
+ if(!L||!shell){host.innerHTML=markup;return}
+ const template=document.createElement('template');template.innerHTML=markup;
+ const next=template.content.querySelector('.shell');
+ if(!next){host.innerHTML=markup;return}
+ for(const selector of ['.side','.top','.wrap']){
+  const current=shell.querySelector(selector),replacement=next.querySelector(selector);
+  current.className=replacement.className;
+  if(current.innerHTML!==replacement.innerHTML)current.replaceChildren(...replacement.childNodes);
+ }
+ const scrim=shell.querySelector('.scrim'),nextScrim=next.querySelector('.scrim');
+ if(scrim&&!nextScrim)scrim.remove();else if(!scrim&&nextScrim)shell.prepend(nextScrim);
+ for(const child of Array.from(host.children))if(child!==shell)child.remove();
+ for(const child of Array.from(template.content.children))if(child!==next)host.append(child);
+}
+let pageAnimation=null;
+function go(p){
+ const changed=p!==S.page;
+ S.page=p;S.nav=false;S.detail=false;render();
+ if(!changed)return;
+ window.scrollTo({top:0,left:0,behavior:'instant'});
+ if(L){
+  const content=host.querySelector('.wrap'),heading=content?.querySelector('h1');
+  heading?.focus({preventScroll:true});
+  pageAnimation?.cancel();
+  if(!window.matchMedia?.('(prefers-reduced-motion:reduce)').matches)
+   pageAnimation=content?.animate?.([{opacity:.65},{opacity:1}],{duration:180,easing:'ease-out'});
+ }
+}
+
 function openAccount(mode){
  var target=['register','forgot','resend'].includes(mode)?mode:'login';
  var path='/app'+(target==='login'?'':'?auth='+target);
@@ -357,7 +390,7 @@ function exportCSV(){if(L){L.exportCSV({form:S.ff,days:S.df,tab:S.tab,q:S.q});re
  a.href=url;a.download='pentreeform-submissions.csv';a.click();URL.revokeObjectURL(url);
  toast('Exported '+(rows.length-1)+' submissions');
 }
-// Adapt only live data and actions. Demo presentation remains the supplied design.
+// Adapt the shared presentation to authenticated account data and server actions.
 const original={sidebar,detail,inbox,overview,formsPage,deliveries,billing,settings,docs,modalView,pbar,dashboard};
 function syncLive(next){L=next;if(!L)return;S.forms=L.forms;S.msgs=L.messages;S.set=L.settings;if(!S.msgs.some(m=>m.id===S.sel))S.sel=S.msgs[0]?.id||null;}
 pbar=function(){return L?'':original.pbar()};
@@ -367,7 +400,13 @@ inbox=function(){let h=original.inbox();if(!L)return h;h=h.replace('placeholder=
 overview=function(){const h=original.overview();return L?h.replace('Review your inbox','Your account is verified').replace('Connect your website form','Connect your website form'):h};
 formsPage=function(){let h=original.formsPage();if(!L)return h;h=h.replace(/<small>submissions<\/small>/g,'<small>loaded submissions</small>');for(const f of S.forms){const button='<button class="btn sm" data-a="testlocal" data-v="'+esc(f.id)+'">'+ic('plus',16)+'Add submission</button>';h=h.replace(button,f.active?'<button class="btn sm" data-a="modal" data-t="archive" data-v="'+esc(f.id)+'">Archive</button>':'');}let index=0;return h.replace(/<span class="badge ">Ready<\/span>/g,()=>badge(S.forms[index++]?.active?'Active':'Archived'))};
 deliveries=function(){const h=original.deliveries();return L?h.replace('Track email notifications for your submissions.','Signed email callbacks update these delivery records. Queued requests retry automatically; accepted emails are not resent.'):h};
-billing=function(){let h=original.billing();if(!L)return h;h=h.replace('Monthly plans',L.billingConfigured?'Merchant checkout configured':'Checkout not configured').replace('Prices are in USD, billed monthly.','Checkout uses the approved monthly USD prices. Availability depends on the configured merchant account.');let index=0;h=h.replace(/data-a="plan"/g,()=> 'data-a="plan" data-v="'+PLANS[index++].n+'"');return h+'<button class="btn" data-a="manage">Manage subscription</button>'};
+billing=function(){
+ let h=original.billing();if(!L)return h;
+ let index=0;h=h.replace(/data-a="plan"/g,()=> 'data-a="plan" data-v="'+PLANS[index++].n+'"');
+ if(!L.billingConfigured)h=h.replace(/<button class="btn[^"]*" data-a="plan"[^>]*>[\s\S]*?<\/button>/g,'');
+ h=h.replace('Monthly plans','Plans').replace('Prices are in USD, billed monthly.',L.billingConfigured?'Prices are in USD, billed monthly.':'Paid upgrades are not available yet. Your current plan remains active.');
+ return h+(L.billingConfigured&&L.user.plan!=='Free'?'<button class="btn" data-a="manage">Manage subscription</button>':'');
+};
 settings=function(){let h=original.settings();if(!L)return h;return h.replace('name="email" type="email"','name="email" type="email" readonly').replace('Manage your workspace preferences.','Your verified email is the notification recipient. It cannot be changed here.').split('<hr>')[0]+'</section>'};
 docs=function(){if(!L)return original.docs();const endpoint=S.forms[0]?ep(S.forms[0].id):window.location.origin+'/f/YOUR-FORM-ID';const snippet='<script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>\n<form action="'+endpoint+'" method="POST">\n  <input name="name" required />\n  <input type="email" name="email" required />\n  <textarea name="message" required></textarea>\n  <input name="_gotcha" hidden tabindex="-1" autocomplete="off" />\n  <div class="cf-turnstile" data-sitekey="'+(L.turnstileSiteKey||'YOUR-SITE-KEY')+'" data-action="submission"></div>\n  <button type="submit">Send message</button>\n</form>';return '<section class="card pad docs">'+badge('HTML · REACT · ANY WEBSITE')+'<h2>One endpoint. Your own form.</h2><p>Create a form for your website’s exact HTTPS hostname. Notifications go to your verified account email.</p><h3>1. Create a form</h3><button class="btn" data-a="modal" data-t="create">'+ic('plus',16)+'New form</button><h3>2. Connect your website</h3><p>Add your endpoint and security widget. Register your website hostname in the Turnstile configuration and use action <code>submission</code>.</p>'+codeBlock(snippet)+'<h3>3. Test the flow</h3><p>Submit from your approved website. Confirm the message appears in your inbox and check the email delivery status. File uploads are not supported.</p><p>Search and summary counts cover loaded messages. CSV export includes all retained matching records.</p></section>'};
 modalView=function(){if(!L)return original.modalView();const m=S.modal;if(!m)return '';if(m.t==='archive')return '<div class="mb" data-a="mbclose"><section class="modal" role="dialog" aria-modal="true" aria-labelledby="mt" tabindex="-1"><div class="ph"><h2 id="mt">Archive this form?</h2><button class="ibtn" aria-label="Close dialog" data-a="close">'+ic('x',20)+'</button></div><p>This stops new submissions and frees an active form slot. Existing messages remain in your inbox.</p><button class="btn dng" data-a="archive" data-v="'+esc(m.v)+'">Archive form</button></section></div>';let h=original.modalView();if(m.t==='create'){h=h.replace('Choose a name, domain, and notification address.','Notifications are sent to your verified account email.').replace('name="email" type="email" required placeholder="you@example.com"','name="email" type="email" required readonly value="'+esc(L.user.email)+'"');if(L.user.plan!=='Free')h=h.replace('<button class="btn pri" type="submit">','<label class="field">Success redirect URL (optional)<input name="redirect" type="url" placeholder="https://example.com/thank-you"></label><button class="btn pri" type="submit">');}if(m.t==='setup'){h=h.replace('Form configuration','Live endpoint').replace('Your form configuration and connection details.','Add this endpoint to your website. Notifications go to your verified email.').replace(/<button class="btn pri" data-a="testlocal"[\s\S]*?<\/button>/,'<p>Open Documentation for the HTML and Turnstile setup instructions.</p>');}if(m.t==='del')h=h.replace('Delete this submission from this browser?','Delete this submission permanently from your account?');if(m.t==='privacy')h=h.replace(/<p>Forms, messages,[\s\S]*?<\/p><\/section>/,'<p>Messages are stored in your account database and sent to your verified email. Retention follows your plan; a downgrade to Free reduces history to 30 days. You can delete messages from your inbox.</p></section>');return h};
@@ -405,6 +444,6 @@ function liveClick(e,t,a,v){switch(a){
 async function liveSubmit(kind,data){if(kind==='create'){await action(async()=>{try{const form=await L.createForm({name:String(data.get('name')||'').trim(),domain:String(data.get('domain')||'').trim(),email:L.user.email,redirect:data.get('redirect')||''});if(!S.forms.some(f=>f.id===form.id))S.forms=[...S.forms,form];S.modal={t:'setup',v:form.id};render()}catch(e){S.modal={t:'create',err:e.message};render()}});}else if(kind==='settings'){await action(()=>L.setSettings({name:String(data.get('name')||'').trim(),workspace:String(data.get('workspace')||'').trim(),email:L.user.email}));}}
 listen(document,'keydown',function(e){if(!S.modal||e.key!=='Tab')return;const elements=host.querySelector('.modal')?.querySelectorAll('button:not([disabled]),input:not([disabled]):not([type=hidden]),select:not([disabled]),textarea:not([disabled]),a[href]');if(!elements?.length)return;const first=elements[0],last=elements[elements.length-1];if(e.shiftKey&&(document.activeElement===first||document.activeElement===host.querySelector('.modal'))){e.preventDefault();last.focus()}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus()}});
 syncLive(L);render();
-return {update(next){if(disposed)return;if(next){syncLive(next);render()}},destroy(){disposed=true;clearTimeout(toastT);for(const remove of listeners)remove();document.body.style.overflow=oldOverflow;host.replaceChildren()}};
+return {update(next){if(disposed)return;if(next){syncLive(next);render()}},destroy(){disposed=true;pageAnimation?.cancel();clearTimeout(toastT);for(const remove of listeners)remove();document.body.style.overflow=oldOverflow;host.replaceChildren()}};
 
 }
