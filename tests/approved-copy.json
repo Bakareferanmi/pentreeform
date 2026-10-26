@@ -246,5 +246,17 @@
   [
     "<h1>Connect your first form</h1>",
     "<h1>Documentation</h1>"
+  ],
+  [
+    "Create form",
+    "New form"
+  ],
+  [
+    "Save changes",
+    "Save"
+  ],
+  [
+    "Save preferences",
+    "Save"
   ]
 ]

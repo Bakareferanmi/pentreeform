@@ -92,3 +92,10 @@
 :root[data-theme] :is(.btn.dng,.modal .btn.dng){border-width:1px;border-color:var(--red)}
 :root[data-theme] .account-actions .account-profile{width:44px;min-width:44px;height:44px;padding:0;border-radius:50%;background:var(--accent-soft);color:var(--accent-text)}
 :root[data-theme] .account-actions .account-profile .account-avatar{display:grid;width:100%;height:100%;border-radius:inherit;background:transparent;color:inherit;font-size:14px;font-weight:700}
+
+/* Fewer competing labels and a single primary action in each section. */
+.stats.stats-compact{grid-template-columns:repeat(2,minmax(0,1fr))}
+.overview-grid.is-connected{grid-template-columns:minmax(0,1fr)}
+.top{min-height:64px}
+:root[data-theme] :is(.main .acts,.modal>.modal-actions) .btn.quiet,:root[data-theme] .account-actions .account-signout.quiet{background:transparent;border-color:transparent;color:var(--muted)!important}
+:root[data-theme] :is(.main .acts,.modal>.modal-actions) .btn.quiet:hover,:root[data-theme] .account-actions .account-signout.quiet:hover{background:var(--surface-soft);border-color:transparent;color:var(--ink)!important}
