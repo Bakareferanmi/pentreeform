@@ -65,7 +65,7 @@ var MSG0=[
 var SET0={name:'Feranmi',workspace:'BeepeeLabs',email:'hello@example.com'};
 var PLANS=[{n:'Free',p:0,l:100,f:2,h:'30 days'},{n:'Starter',p:3,l:1000,f:5,h:'6 months'},{n:'Pro',p:7,l:5000,f:20,h:'12 months'},{n:'Agency',p:15,l:15000,f:50,h:'12 months'}];
 var NAV=[['Overview','home'],['Forms','file'],['Inbox','inbox'],['Deliveries','send'],['Usage & billing','chart'],['Settings','settings'],['Documentation','book']];
-var TITLES={'Inbox':['Your inbox','Every submission, in one place.'],'Forms':['Your forms','A home for every form on your website.'],'Overview':['Workspace overview','A clear view of what’s coming in.'],'Deliveries':['Email deliveries','See what happened after a submission was saved.'],'Usage & billing':['Simple plans. Room to grow.','Start free. Upgrade when your forms get busier.'],'Settings':['Workspace settings','Make this workspace yours.'],'Documentation':['Connect your first form','Keep your form. Change where it submits.']};
+var TITLES={'Inbox':['Inbox','Every submission, in one place.'],'Forms':['Forms','A home for every form on your website.'],'Overview':['Overview','A clear view of what’s coming in.'],'Deliveries':['Deliveries','See what happened after a submission was saved.'],'Usage & billing':['Usage & billing','Start free. Upgrade when your forms get busier.'],'Settings':['Settings','Make this workspace yours.'],'Documentation':['Documentation','Keep your form. Change where it submits.']};
 var DELIVERY_STATES={
  delivered:{label:'Email delivered',tone:'success',icon:'check',note:'Delivered to the recipient’s mail server. Inbox placement is not guaranteed.'},
  accepted:{label:'Email accepted',tone:'pending',icon:'clock',note:'The email service accepted this notification. Delivery has not been confirmed.'},

@@ -218,5 +218,33 @@
   [
     ">Preview<",
     ">Ready<"
+  ],
+  [
+    "<h1>Your inbox</h1>",
+    "<h1>Inbox</h1>"
+  ],
+  [
+    "<h1>Your forms</h1>",
+    "<h1>Forms</h1>"
+  ],
+  [
+    "<h1>Workspace overview</h1>",
+    "<h1>Overview</h1>"
+  ],
+  [
+    "<h1>Email deliveries</h1>",
+    "<h1>Deliveries</h1>"
+  ],
+  [
+    "<h1>Simple plans. Room to grow.</h1>",
+    "<h1>Usage &amp; billing</h1>"
+  ],
+  [
+    "<h1>Workspace settings</h1>",
+    "<h1>Settings</h1>"
+  ],
+  [
+    "<h1>Connect your first form</h1>",
+    "<h1>Documentation</h1>"
   ]
 ]
