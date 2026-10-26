@@ -270,6 +270,11 @@ function render(){
  document.body.style.overflow=S.modal?'hidden':oldOverflow;
 }
 function go(p){S.page=p;S.nav=false;S.detail=false;render();window.scrollTo(0,0)}
+function openAccount(mode){
+ var target=['register','forgot','resend'].includes(mode)?mode:'login';
+ var path='/app'+(target==='login'?'':'?auth='+target);
+ if(options.onAccount)options.onAccount(path);else window.location.assign(path);
+}
 function setScreen(s){S.screen=s;S.amsg='';S.tok=false;S.modal=null;S.mode=(s==='verify'||s==='dashboard')?'resend':s;render()}
 
 /* ---------- events ---------- */
@@ -281,7 +286,7 @@ listen(R,'click',function(e){
  if(L&&liveClick(e,t,a,v))return;
  if(a==='mbclose'){if(e.target!==t)return;S.modal=null;return render()}
  switch(a){
-  case 'google-preview':toast('Google sign-in is unavailable.');break;
+  case 'google-preview':openAccount('login');break;
   case 'nav':go(v);break;
   case 'navopen':S.nav=true;render();break;
   case 'navclose':S.nav=false;render();break;
@@ -294,7 +299,7 @@ listen(R,'click',function(e){
   case 'copy':copy(v);break;
   case 'modal':S.nav=false;S.modal={t:t.getAttribute('data-t'),v:v};render();break;
   case 'profile-nav':S.modal=null;S.nav=false;go(v);break;
-  case 'logout':S.nav=false;setScreen('login');break;
+  case 'logout':openAccount('login');break;
   case 'close':S.modal=null;render();break;
   case 'toastx':S.toast='';render();break;
   case 'spamtoggle':var sm=S.msgs.filter(function(m){return m.id===v})[0];upd(v,{spam:!sm.spam});S.modal=null;toast(sm.spam?'Moved to inbox':'Moved to spam');break;
@@ -305,8 +310,8 @@ listen(R,'click',function(e){
   case 'testlocal':var f=S.forms.filter(function(x){return x.id===v})[0];var nm={id:(crypto.randomUUID?crypto.randomUUID():String(Date.now())),name:'Test Visitor',email:'visitor@example.com',formId:f.id,subject:'Your submission is here',message:'A new message for your inbox.',date:new Date().toISOString(),delivery:'not-connected',read:false,spam:false};S.msgs=[nm].concat(S.msgs);S.sel=nm.id;S.ff='all';S.tab='All';S.modal=null;S.page='Inbox';persist();toast('Submission added to your inbox.');break;
   case 'plan':toast('Checkout is unavailable.');break;
   case 'export':exportCSV();break;
-  case 'screen':setScreen(v);break;
-  case 'mode':S.mode=v;S.amsg='';S.tok=false;render();break;
+  case 'screen':if(v==='dashboard')setScreen(v);else openAccount(v);break;
+  case 'mode':openAccount(v);break;
  }
 });
 listen(R,'input',function(e){if(e.target.id==='q'){S.q=e.target.value;render()}});
@@ -331,10 +336,8 @@ listen(R,'submit',function(e){
   S.forms=S.forms.concat(nf);persist();S.modal={t:'setup',v:nf.id};toast('Form configuration saved');
  }
  else if(f==='auth'){
-  if(S.mode==='login'&&S.screen!=='verify'){setScreen('dashboard');S.page='Inbox';render();return}
-  S.amsg='This account action is unavailable.';
-  if(S.mode==='reset'){S.mode='login';S.screen='login'}
-  S.tok=false;render();
+  // Account actions always run in the live flow, never against browser-only data.
+  openAccount(S.screen==='verify'?'resend':S.mode==='reset'?'forgot':S.mode);
  }
 });
 listen(document,'keydown',function(e){if(e.key==='Escape'&&S.modal){S.modal=null;render()}});
