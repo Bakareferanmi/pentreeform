@@ -6,6 +6,10 @@ export function BrandMotion({state='loading'}){
  return <span className="brand-slot" dangerouslySetInnerHTML={{__html:brandMotionMarkup(state)}}/>;
 }
 
+export function LoadingScreen(){
+ return <main className="brand-loading" role="status" aria-live="polite" aria-label="Loading Pentreeform"><BrandMotion/><span className="sr">Loading Pentreeform…</span></main>;
+}
+
 export function Toast({message,error=false,onDismiss}){
  const [paused,setPaused]=useState(false),dismiss=useRef(onDismiss);
  dismiss.current=onDismiss;
