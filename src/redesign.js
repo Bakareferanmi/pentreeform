@@ -3,6 +3,7 @@ import {getTheme,toggleTheme,themeLabel,THEME_EVENT} from './theme.js';
 import {BRAND_ICON,brandMotionMarkup,loadingScreenMarkup} from './brand.js';
 import {GOOGLE_ICON} from './google-brand.js';
 import {socialLinksMarkup} from './social-links.js';
+import {workspaceViews} from './workspace-views.js';
 // Shared workspace presentation. Public routes always supply authenticated live data.
 export function mountRedesign(host,options={}) {
 let L=options.live||null,disposed=false;
@@ -12,6 +13,8 @@ function listen(target,event,handler){target.addEventListener(event,handler);lis
 "use strict";
 /* ---------- icons (lucide paths) ---------- */
 var P={
+filter:'<path d="M4 7h16M7 12h10M10 17h4"/>',
+archive:'<rect x="3" y="3" width="18" height="4" rx="1"/><path d="M5 7v13h14V7M10 11h4"/>',
 home:'<path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8"/><path d="M3 10a2 2 0 0 1 .709-1.528l7-5.999a2 2 0 0 1 2.582 0l7 5.999A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>',
 file:'<path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M10 9H8"/><path d="M16 13H8"/><path d="M16 17H8"/>',
 inbox:'<polyline points="22 12 16 12 14 15 10 15 8 12 2 12"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/>',
@@ -89,7 +92,7 @@ function save(k,v){try{localStorage.setItem('pentreeform:'+k,JSON.stringify(v))}
 
 /* ---------- state ---------- */
 var S={
- screen:'dashboard',page:'Inbox',nav:false,
+ screen:'dashboard',page:'Inbox',nav:false,filtersOpen:false,
  forms:load('forms',FORMS0),msgs:load('messages',MSG0),set:load('settings',SET0),
  sel:'m0',q:'',tab:'All',ff:'all',df:'30',chk:[],detail:false,modal:null,toast:'',toastKind:'notice',
  amsg:'',tok:false,mode:'login',focusQ:false
@@ -101,7 +104,7 @@ function resumeToast(){clearTimeout(toastT);if(S.toastKind==='error')return;toas
 function rel(d){var a=Math.max(0,Math.floor((Date.now()-new Date(d))/60000));return a<1?'Just now':a<60?a+' min ago':a<1440?Math.floor(a/60)+' hours ago':Math.floor(a/1440)+' days ago'}
 function formName(id){var f=S.forms.filter(function(x){return x.id===id})[0];return f?f.name:'Deleted form'}
 function ep(id){return L?window.location.origin+'/f/'+id:'https://pentreeform.example/f/'+id.replace(/-demo$/,'')}
-function copy(t){(navigator.clipboard?navigator.clipboard.writeText(t):Promise.reject()).then(function(){toast('Copied to clipboard')},function(){toast('Clipboard unavailable. Select and copy the text manually.')})}
+function copy(t){Promise.resolve().then(()=>navigator.clipboard?navigator.clipboard.writeText(t):Promise.reject()).then(function(){if(!disposed)toast('Copied to clipboard')},function(){if(disposed)return;const code=Array.from(host.querySelectorAll('code,pre')).find(node=>node.textContent===t);if(code){const range=document.createRange(),selection=window.getSelection();range.selectNodeContents(code);selection.removeAllRanges();selection.addRange(range);toast('Clipboard unavailable. Copy the selected text.');const current=Array.from(host.querySelectorAll('code,pre')).find(node=>node.textContent===t);if(current){range.selectNodeContents(current);selection.removeAllRanges();selection.addRange(range)}}else toast('Clipboard unavailable. Select and copy the text manually.')})}
 function filtered(){
  return S.msgs.filter(function(m){
   if(S.tab==='Spam'?!m.spam:m.spam)return false;
@@ -149,6 +152,9 @@ function stats(compact=false){
 }
 function needAtt(){return S.msgs.filter(function(m){return ['failed','bounced','complained','suppressed'].indexOf(m.delivery)>-1&&!m.spam})}
 
+const submissionRow=function(m){return '<div class="row'+(S.sel===m.id?' sel':'')+(m.read?'':' unread')+'"><input type="checkbox" class="cb" aria-label="Select '+esc(m.name)+'" data-k="'+m.id+'"'+(S.chk.indexOf(m.id)>-1?' checked':'')+'>'+
+  '<button class="open" data-a="open" data-v="'+m.id+'"><span class="'+avc(m.name)+'">'+esc(ini(m.name))+'</span><span class="rb"><span class="rt"><strong>'+esc(m.name)+'</strong><small>'+rel(m.date)+'</small></span><div class="subj">'+esc(m.subject)+'</div><div class="snip">'+esc(m.message)+'</div><span class="message-statuses">'+messageBadge(m)+deliveryBadge(m.delivery)+'</span>'+badge(esc(formName(m.formId)),m.formId.indexOf('newsletter')>-1?'g':'')+'</span></button></div>'};
+
 function inbox(){
  var list=filtered(),cur=S.msgs.filter(function(m){return m.id===S.sel})[0],att=needAtt().length,ur=S.msgs.filter(function(m){return !m.read&&!m.spam}).length;
  var h='';
@@ -158,8 +164,7 @@ function inbox(){
  '<select data-c="df" aria-label="Filter by date">'+[['30','Last 30 days'],['7','Last 7 days'],['1','Last 24 hours'],['all','All time']].map(function(o){return '<option value="'+o[0]+'"'+(S.df===o[0]?' selected':'')+'>'+o[1]+'</option>'}).join('')+'</select></div>'+
  '<div class="tabs">'+['All','Unread','Spam'].map(function(t){return '<button class="'+(S.tab===t?'on':'')+'" data-a="tab" data-v="'+t+'">'+t+(t==='Unread'?'<span>'+ur+'</span>':'')+'</button>'}).join('')+
  (S.chk.length?'<button class="bulk" data-a="bulk">'+ic('cc',16)+'Read ('+S.chk.length+')</button>':'')+'</div><div class="list">'+
- (list.length?list.map(function(m){return '<div class="row'+(S.sel===m.id?' sel':'')+(m.read?'':' unread')+'"><input type="checkbox" class="cb" aria-label="Select '+esc(m.name)+'" data-k="'+m.id+'"'+(S.chk.indexOf(m.id)>-1?' checked':'')+'>'+
-  '<button class="open" data-a="open" data-v="'+m.id+'"><span class="'+avc(m.name)+'">'+esc(ini(m.name))+'</span><span class="rb"><span class="rt"><strong>'+esc(m.name)+'</strong><small>'+rel(m.date)+'</small></span><div class="subj">'+esc(m.subject)+'</div><div class="snip">'+esc(m.message)+'</div><span class="message-statuses">'+messageBadge(m)+deliveryBadge(m.delivery)+'</span>'+badge(esc(formName(m.formId)),m.formId.indexOf('newsletter')>-1?'g':'')+'</span></button></div>'}).join(''):
+ (list.length?list.map(submissionRow).join(''):
   '<div class="empty"><div class="ei">'+ic('inbox',28)+'</div><h3>No submissions here</h3><p>Try another search or filter.</p><button class="btn" data-a="clear">Clear filters</button></div>')+
  '</div></div><div class="dp">'+(cur?detail(cur):'<div class="empty"><div class="ei">'+ic('mail',28)+'</div><h3>Select a submission</h3><p>Its details will appear here.</p></div>')+'</div></section>';
  return h;
@@ -175,7 +180,7 @@ function detail(m){
 function overview(){
  var showSetup=S.forms.length===0;
  return '<section class="grid2 overview-grid'+(showSetup?'':' is-connected')+'"><div class="card pad"><div class="ph"><h2>Forms at a glance</h2><button class="lk" data-a="nav" data-v="Forms">View forms '+ic('ur',16)+'</button></div>'+
- S.forms.map(function(f){return '<button class="orow" data-a="formjump" data-v="'+esc(f.id)+'"><span class="fic">'+ic('file')+'</span><span><strong>'+esc(f.name)+'</strong><small>'+esc(f.domain)+'</small></span>'+badge(S.msgs.filter(function(m){return m.formId===f.id&&!m.spam}).length+' submissions')+ic('ur',17)+'</button>'}).join('')+'</div>'+
+ (L&&!S.forms.length?liveViews.formEmpty():'')+S.forms.map(function(f){return '<button class="orow" data-a="formjump" data-v="'+esc(f.id)+'"><span class="fic">'+ic('file')+'</span><span><strong>'+esc(f.name)+'</strong><small>'+esc(f.domain)+'</small></span>'+badge(S.msgs.filter(function(m){return m.formId===f.id&&!m.spam}).length+' submissions')+ic('ur',17)+'</button>'}).join('')+'</div>'+
  (showSetup?'<div class="card pad start">'+badge('GETTING STARTED')+'<h2>Your forms, connected.</h2><p>Create an endpoint, add it to your website, and keep enquiries together.</p><ol><li>'+ic('check',17)+'Review your inbox</li><li>'+ic('clock',17)+'Create a form configuration</li><li>'+ic('clock',17)+'Connect your website form</li></ol><button class="btn" data-a="nav" data-v="Documentation">Setup guide '+ic('ur',16)+'</button></div>':'')+'</section>';
 }
 function formsPage(){
@@ -264,13 +269,13 @@ function prepareDialog(markup){
 var modalOpener=null;
 function render(){
  var a=document.activeElement,keepQ=a&&a.id==='q',pos=keepQ?a.selectionStart:0,wasModal=!!host.querySelector('.modal');
- if(S.modal&&!wasModal&&a&&host.contains(a))modalOpener={action:a.getAttribute('data-a'),type:a.getAttribute('data-t'),value:a.getAttribute('data-v'),label:a.getAttribute('aria-label'),className:a.className};
+ if(S.modal&&!wasModal&&a&&host.contains(a))modalOpener={formMenu:a.closest('.form-menu')?.dataset.formId,action:a.getAttribute('data-a'),type:a.getAttribute('data-t'),value:a.getAttribute('data-v'),label:a.getAttribute('aria-label'),className:a.className};
  const markup=pbar()+(S.screen==='dashboard'?dashboard():auth())+prepareDialog(modalView())+(S.toast?'<div role="'+(S.toastKind==='error'?'alert':'status')+'" aria-atomic="true" class="toast pf-toast'+(S.toastKind==='error'?' is-error':'')+'">'+brandMotionMarkup(S.toastKind)+'<span class="feedback-copy">'+esc(S.toast)+'</span>'+'<button aria-label="Dismiss notification" data-a="toastx">'+ic('x',16)+'</button></div>':'');
  commitMarkup(markup);
  document.title='Pentreeform · '+(S.screen==='dashboard'?S.page:'Account');
  if(keepQ){var q=document.getElementById('q');if(q){q.focus();q.setSelectionRange(pos,pos)}}
  if(S.modal){var d=host.querySelector('.modal');if(d)d.focus()}
- else if(wasModal&&modalOpener){var opener=Array.from(host.querySelectorAll('[data-a]')).find(function(button){return button.getAttribute('data-a')===modalOpener.action&&button.getAttribute('data-t')===modalOpener.type&&button.getAttribute('data-v')===modalOpener.value&&button.getAttribute('aria-label')===modalOpener.label&&button.className===modalOpener.className});if(opener)opener.focus();modalOpener=null}
+ else if(wasModal&&modalOpener){var opener=modalOpener.formMenu?Array.from(host.querySelectorAll('.form-menu')).find(menu=>menu.dataset.formId===modalOpener.formMenu)?.querySelector('summary'):Array.from(host.querySelectorAll('[data-a]')).find(function(button){return button.getAttribute('data-a')===modalOpener.action&&button.getAttribute('data-t')===modalOpener.type&&button.getAttribute('data-v')===modalOpener.value&&button.getAttribute('aria-label')===modalOpener.label&&button.className===modalOpener.className});if(opener)opener.focus();modalOpener=null}
  host.querySelectorAll('.shell,.auth,.pbar').forEach(function(node){node.inert=!!S.modal});
  document.body.style.overflow=S.modal?'hidden':oldOverflow;
  syncPending();
@@ -296,7 +301,7 @@ function commitMarkup(markup){
 let pageAnimation=null;
 function go(p){
  const changed=p!==S.page;
- S.page=p;S.nav=false;S.detail=false;render();
+ S.page=p;S.nav=false;S.detail=false;S.filtersOpen=false;render();
  if(!changed)return;
  window.scrollTo({top:0,left:0,behavior:'instant'});
  if(L){
@@ -322,6 +327,7 @@ listen(R,'pointerout',function(e){const t=e.target.closest('.toast');if(t&&!t.co
 listen(R,'focusin',function(e){if(e.target.closest('.toast'))clearTimeout(toastT)});
 listen(R,'focusout',function(e){const t=e.target.closest('.toast');if(t&&!t.contains(e.relatedTarget))resumeToast()});
 listen(R,'click',function(e){
+ host.querySelectorAll('.form-menu[open]').forEach(menu=>{if(!menu.contains(e.target))menu.open=false});
  var t=e.target.closest('[data-a]');if(!t)return;
  var a=t.getAttribute('data-a'),v=t.getAttribute('data-v');
  if(a==='theme'){toggleTheme();return}
@@ -332,11 +338,13 @@ listen(R,'click',function(e){
   case 'nav':go(v);break;
   case 'navopen':S.nav=true;render();break;
   case 'navclose':S.nav=false;render();break;
-  case 'tab':S.tab=v;S.chk=[];render();break;
+  case 'tab':S.tab=v;S.chk=[];S.detail=false;render();break;
+  case 'filters':S.filtersOpen=!S.filtersOpen;render();host.querySelector('[data-a=filters]')?.focus();break;
+  case 'clearfilter':if(v==='ff')S.ff='all';if(v==='df')S.df='all';S.chk=[];S.detail=false;render();host.querySelector('#q')?.focus();break;
   case 'bulk':S.msgs=S.msgs.map(function(m){return S.chk.indexOf(m.id)>-1?Object.assign({},m,{read:true}):m});S.chk=[];persist();toast('Selected messages marked as read');break;
   case 'open':S.sel=v;upd(v,{read:true});S.detail=true;render();break;
   case 'back':S.detail=false;render();break;
-  case 'clear':S.q='';S.ff='all';S.tab='All';S.df='all';render();break;
+  case 'clear':S.q='';S.ff='all';S.tab='All';S.df='all';S.chk=[];S.detail=false;render();host.querySelector('#q')?.focus();break;
   case 'toggleread':var cm=S.msgs.filter(function(m){return m.id===v})[0];upd(v,{read:!cm.read});render();break;
   case 'copy':copy(v);break;
   case 'modal':S.nav=false;S.modal={t:t.getAttribute('data-t'),v:v};render();break;
@@ -356,15 +364,15 @@ listen(R,'click',function(e){
   case 'mode':openAccount(v);break;
  }
 });
-listen(R,'input',function(e){if(e.target.id==='q'){S.q=e.target.value;render()}});
+listen(R,'input',function(e){if(e.target.id==='q'){S.q=e.target.value;S.chk=[];S.detail=false;render()}});
 listen(R,'change',function(e){
  var t=e.target;
  if(t.hasAttribute('data-k')){var id=t.getAttribute('data-k');S.chk=t.checked?S.chk.concat(id):S.chk.filter(function(x){return x!==id});render();return}
  if(t.hasAttribute('data-sec')){S.tok=t.checked;render();return}
  var c=t.getAttribute('data-c');
  if(c==='screen')setScreen(t.value);
- else if(c==='ff'){S.ff=t.value;render()}
- else if(c==='df'){S.df=t.value;render()}
+ else if(c==='ff'){S.ff=t.value;S.chk=[];S.detail=false;render();host.querySelector('[data-c=ff]')?.focus()}
+ else if(c==='df'){S.df=t.value;S.chk=[];S.detail=false;render();host.querySelector('[data-c=df]')?.focus()}
 });
 listen(R,'submit',function(e){
  var f=e.target.getAttribute('data-f');if(!f)return;e.preventDefault();
@@ -382,7 +390,7 @@ listen(R,'submit',function(e){
   openAccount(S.screen==='verify'?'resend':S.mode==='reset'?'forgot':S.mode);
  }
 });
-listen(document,'keydown',function(e){if(e.key==='Escape'&&S.modal){S.modal=null;render()}});
+listen(document,'keydown',function(e){if(e.key==='Escape'&&S.modal){S.modal=null;render()}else if(e.key==='Escape'){host.querySelectorAll('.form-menu[open]').forEach(menu=>{menu.open=false;menu.querySelector('summary').focus()});if(S.filtersOpen){S.filtersOpen=false;render();host.querySelector('[data-a=filters]')?.focus()}}});
 
 function exportCSV(){if(L){L.exportCSV({form:S.ff,days:S.df,tab:S.tab,q:S.q});return;}
  var rows=[['Name','Email','Form','Subject','Message','Received','Delivery']].concat(filtered().map(function(m){return [m.name,m.email,formName(m.formId),m.subject,m.message,m.date,m.delivery]}));
@@ -393,14 +401,15 @@ function exportCSV(){if(L){L.exportCSV({form:S.ff,days:S.df,tab:S.tab,q:S.q});re
 }
 // Adapt the shared presentation to authenticated account data and server actions.
 const original={sidebar,detail,inbox,overview,formsPage,deliveries,billing,settings,docs,modalView,pbar,dashboard};
+const liveViews=workspaceViews({state:S,getLive:()=>L,esc,ic,badge,ep,filtered,detail:message=>detail(message),row:submissionRow,needAtt});
 function syncLive(next){L=next;if(!L)return;S.forms=L.forms;S.msgs=L.messages;S.set=L.settings;if(!S.msgs.some(m=>m.id===S.sel))S.sel=S.msgs[0]?.id||null;}
 pbar=function(){return L?'':original.pbar()};
 sidebar=function(){let h=original.sidebar();if(!L)return h;h=h.replace(/<button class="me"[\s\S]*?<\/button>/,'');const usage=monthlyUsage();h=h.replace('<strong>Starter</strong>','<strong>'+esc(L.user.plan)+' plan</strong>').replace(S.msgs.filter(m=>!m.spam).length+' / 1,000',esc(L.usage)+' / '+esc(L.limit.toLocaleString()));if(!usage)return h;h=h.replace('class="plan"','class="plan" data-usage-level="'+usage.level+'" aria-label="Usage: '+usage.used.toLocaleString()+' of '+usage.limit.toLocaleString()+' submissions this month"');return h.replace(/style="width:[^\"]+"/,'style="width:'+usage.progress+'%"')};
 detail=function(m){let h=original.detail(m);if(!L)return h;const fields=Object.entries(m.fields||{}).filter(([key])=>!['name','email','message','subject'].includes(key));return h.replace('</dl>',fields.map(([k,v])=>'<dt>'+esc(k)+'</dt><dd>'+esc(v)+'</dd>').join('')+'</dl>')};
-inbox=function(){let h=original.inbox();if(!L)return h;h=h.replace('placeholder="Search submissions"','placeholder="Search loaded submissions"');if(L.nextCursor)h=h.replace('</div></div><div class="dp">','</div><button class="btn sm" data-a="older">Load older submissions</button></div><div class="dp">');return h};
+inbox=function(){return L?liveViews.inbox():original.inbox()};
 overview=function(){const h=original.overview();return L?h.replace('Review your inbox','Your account is verified').replace('Connect your website form','Connect your website form'):h};
-formsPage=function(){let h=original.formsPage();if(!L)return h;h=h.replace(/<small>submissions<\/small>/g,'<small>loaded submissions</small>');for(const f of S.forms){const button='<button class="btn sm" data-a="testlocal" data-v="'+esc(f.id)+'">'+ic('plus',16)+'Add submission</button>';h=h.replace(button,f.active?'<button class="btn sm" data-a="modal" data-t="archive" data-v="'+esc(f.id)+'">Archive</button>':'');}let index=0;return h.replace(/<span class="badge ">Ready<\/span>/g,()=>badge(S.forms[index++]?.active?'Active':'Archived'))};
-deliveries=function(){const h=original.deliveries();return L?h.replace('Track email notifications for your submissions.','Signed email callbacks update these delivery records. Queued requests retry automatically; accepted emails are not resent.'):h};
+formsPage=function(){return L?liveViews.formsPage():original.formsPage()};
+deliveries=function(){if(!L)return original.deliveries();return liveViews.deliveries()||original.deliveries().replace('Track email notifications for your submissions.','Track email delivery. Temporary failures retry automatically.')};
 billing=function(){
  let h=original.billing();if(!L)return h;
  let index=0;h=h.replace(/data-a="plan"/g,()=> 'data-a="plan" data-v="'+PLANS[index++].n+'"');
@@ -408,9 +417,9 @@ billing=function(){
  h=h.replace('Monthly plans','Plans').replace('Prices are in USD, billed monthly.',L.billingConfigured?'Prices are in USD, billed monthly.':'Paid upgrades are not available yet. Your current plan remains active.');
  return h+(L.billingConfigured&&L.user.plan!=='Free'?'<button class="btn" data-a="manage">Manage subscription</button>':'');
 };
-settings=function(){let h=original.settings();if(!L)return h;return h.replace('name="email" type="email"','name="email" type="email" readonly').replace('Manage your workspace preferences.','Your verified email is the notification recipient. It cannot be changed here.').split('<hr>')[0]+'</section>'};
-docs=function(){if(!L)return original.docs();const endpoint=S.forms[0]?ep(S.forms[0].id):window.location.origin+'/f/YOUR-FORM-ID';const snippet='<script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>\n<form action="'+endpoint+'" method="POST">\n  <input name="name" required />\n  <input type="email" name="email" required />\n  <textarea name="message" required></textarea>\n  <input name="_gotcha" hidden tabindex="-1" autocomplete="off" />\n  <div class="cf-turnstile" data-sitekey="'+(L.turnstileSiteKey||'YOUR-SITE-KEY')+'" data-action="submission"></div>\n  <button type="submit">Send message</button>\n</form>';return '<section class="card pad docs">'+badge('HTML · REACT · ANY WEBSITE')+'<h2>One endpoint. Your own form.</h2><p>Create a form for your website’s exact HTTPS hostname. Notifications go to your verified account email.</p><h3>1. Create a form</h3><button class="btn" data-a="modal" data-t="create">'+ic('plus',16)+'New form</button><h3>2. Connect your website</h3><p>Add your endpoint and security widget. Register your website hostname in the Turnstile configuration and use action <code>submission</code>.</p>'+codeBlock(snippet)+'<h3>3. Test the flow</h3><p>Submit from your approved website. Confirm the message appears in your inbox and check the email delivery status. File uploads are not supported.</p><p>Search and summary counts cover loaded messages. CSV export includes all retained matching records.</p></section>'};
-modalView=function(){if(!L)return original.modalView();const m=S.modal;if(!m)return '';if(m.t==='archive')return '<div class="mb" data-a="mbclose"><section class="modal" role="dialog" aria-modal="true" aria-labelledby="mt" tabindex="-1"><div class="ph"><h2 id="mt">Archive this form?</h2><button class="ibtn" aria-label="Close dialog" data-a="close">'+ic('x',20)+'</button></div><p>This stops new submissions and frees an active form slot. Existing messages remain in your inbox.</p><button class="btn dng" data-a="archive" data-v="'+esc(m.v)+'">Archive form</button></section></div>';let h=original.modalView();if(m.t==='create'){h=h.replace('Choose a name, domain, and notification address.','Notifications are sent to your verified account email.').replace('name="email" type="email" required placeholder="you@example.com"','name="email" type="email" required readonly value="'+esc(L.user.email)+'"');if(L.user.plan!=='Free')h=h.replace('<button class="btn pri" type="submit">','<label class="field">Success redirect URL (optional)<input name="redirect" type="url" placeholder="https://example.com/thank-you"></label><button class="btn pri" type="submit">');}if(m.t==='setup'){h=h.replace('Form configuration','Live endpoint').replace('Your form configuration and connection details.','Add this endpoint to your website. Notifications go to your verified email.').replace(/<button class="btn pri" data-a="testlocal"[\s\S]*?<\/button>/,'<p>Open Documentation for the HTML and Turnstile setup instructions.</p>');}if(m.t==='del')h=h.replace('Delete this submission from this browser?','Delete this submission permanently from your account?');if(m.t==='privacy')h=h.replace(/<p>Forms, messages,[\s\S]*?<\/p><\/section>/,'<p>Messages are stored in your account database and sent to your verified email. Retention follows your plan; a downgrade to Free reduces history to 30 days. You can delete messages from your inbox.</p></section>');return h};
+settings=function(){let h=original.settings();if(!L)return h;return h.replace('name="email" type="email"','name="email" type="email" readonly').replace('Manage your workspace preferences.','Notifications go to this verified email.').split('<hr>')[0]+'</section>'};
+docs=function(){if(!L)return original.docs();const endpoint=S.forms[0]?ep(S.forms[0].id):window.location.origin+'/f/YOUR-FORM-ID';const snippet='<script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>\n<form action="'+endpoint+'" method="POST">\n  <input name="name" required />\n  <input type="email" name="email" required />\n  <textarea name="message" required></textarea>\n  <input name="_gotcha" hidden tabindex="-1" autocomplete="off" />\n  <div class="cf-turnstile" data-sitekey="'+(L.turnstileSiteKey||'YOUR-SITE-KEY')+'" data-action="submission"></div>\n  <button type="submit">Send message</button>\n</form>';return '<section class="card pad docs">'+badge('HTML · REACT · ANY WEBSITE')+'<h2>One endpoint. Your own form.</h2><p>Create a form for your website’s exact HTTPS hostname. Notifications go to your verified account email.</p><h3>1. Create a form</h3><button class="btn" data-a="modal" data-t="create">'+ic('plus',16)+'New form</button><h3>2. Connect your website</h3><p>Add your endpoint and security widget. Register your website hostname in the Turnstile configuration and use action <code>submission</code>.</p>'+codeBlock(snippet)+'<h3>3. Test the flow</h3><p>Submit from your approved website. Confirm the message appears in your inbox and check the email delivery status. File uploads are not supported.</p><p>Load more in Inbox to search older submissions. Exports include all saved submissions.</p></section>'};
+modalView=function(){if(!L)return original.modalView();const m=S.modal;if(!m)return '';if(m.t==='archive')return '<div class="mb" data-a="mbclose"><section class="modal" role="dialog" aria-modal="true" aria-labelledby="mt" tabindex="-1"><div class="ph"><h2 id="mt">Archive this form?</h2><button class="ibtn" aria-label="Close dialog" data-a="close">'+ic('x',20)+'</button></div><p>New submissions will stop. Existing messages stay in your inbox.</p><button class="btn dng" data-a="archive" data-v="'+esc(m.v)+'">Archive form</button></section></div>';let h=original.modalView();if(m.t==='create'){h=h.replace('Choose a name, domain, and notification address.','Notifications go to your verified email.').replace('name="email" type="email" required placeholder="you@example.com"','name="email" type="email" required readonly value="'+esc(L.user.email)+'"');if(L.user.plan!=='Free')h=h.replace('<button class="btn pri" type="submit">','<label class="field">Success redirect URL (optional)<input name="redirect" type="url" placeholder="https://example.com/thank-you"></label><button class="btn pri" type="submit">');}if(m.t==='setup'){h=h.replace('id="mt">Form setup','id="mt">Form settings').replace('Form configuration','Endpoint').replace('Your form configuration and connection details.','Copy this endpoint into your website form.').replace(/<button class="btn pri" data-a="testlocal"[\s\S]*?<\/button>/,'<p>See Documentation for connection instructions.</p>');}if(m.t==='del')h=h.replace('Delete this submission from this browser?','Delete this submission permanently from your account?');if(m.t==='privacy')h=h.replace(/<p>Forms, messages,[\s\S]*?<\/p><\/section>/,'<p>Messages are stored in your account database and sent to your verified email. Retention follows your plan; a downgrade to Free reduces history to 30 days. You can delete messages from your inbox.</p></section>');return h};
 let pending=false;
 function syncPending(){
  if(disposed)return;
