@@ -20,7 +20,7 @@
   "vars": {
     "APP_ORIGIN": "https://pentreeform.vercel.app",
     "EMAIL_FROM": "Pentreeform <notifications@notify.beepeelabs.cv>",
-    "REGISTRATION_OPEN": "false",
+    "REGISTRATION_OPEN": "true",
     "TURNSTILE_SITE_KEY": "0x4AAAAAAFmfScjhtwVx_3ig"
   },
   "triggers": {
