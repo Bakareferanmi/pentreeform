@@ -5,6 +5,6 @@
   "compatibility_date": "2026-10-24",
   "assets": {"directory": "./dist", "binding": "ASSETS", "not_found_handling": "single-page-application", "run_worker_first": true},
   "d1_databases": [{"binding": "DB", "database_name": "pentreeform", "database_id": "e389ba21-f8f6-4dc9-bac1-27b79efb5b66", "migrations_dir": "migrations"}],
-  "vars": {"APP_ORIGIN": "https://pentreeform.vercel.app", "EMAIL_FROM": "Pentreeform <notifications@YOUR-VERIFIED-DOMAIN.com>", "REGISTRATION_OPEN": "false", "TURNSTILE_SITE_KEY": ""},
+  "vars": {"APP_ORIGIN": "https://pentreeform.vercel.app", "EMAIL_FROM": "Pentreeform <notifications@notify.beepeelabs.cv>", "REGISTRATION_OPEN": "false", "TURNSTILE_SITE_KEY": ""},
   "triggers": {"crons": ["* * * * *"]}
 }
