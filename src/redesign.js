@@ -1,6 +1,6 @@
 import {usageSummary} from '../shared/usage.js';
 import {getTheme,toggleTheme,themeLabel,THEME_EVENT} from './theme.js';
-import {BRAND_ICON} from './brand.js';
+import {BRAND_ICON,brandMotionMarkup} from './brand.js';
 import {GOOGLE_ICON} from './google-brand.js';
 // Imported from the supplied design. Presentation CSS and demo markup are preserved.
 export function mountRedesign(host,options={}) {
@@ -91,12 +91,13 @@ function save(k,v){try{localStorage.setItem('pentreeform:'+k,JSON.stringify(v))}
 var S={
  screen:'dashboard',page:'Inbox',nav:false,
  forms:load('forms',FORMS0),msgs:load('messages',MSG0),set:load('settings',SET0),
- sel:'m0',q:'',tab:'All',ff:'all',df:'30',chk:[],detail:false,modal:null,toast:'',
+ sel:'m0',q:'',tab:'All',ff:'all',df:'30',chk:[],detail:false,modal:null,toast:'',toastKind:'notice',
  amsg:'',tok:false,mode:'login',focusQ:false
 };
 var toastT;
 function persist(){if(L)return;save('forms',S.forms);save('messages',S.msgs);save('settings',S.set)}
-function toast(m){S.toast=m;clearTimeout(toastT);toastT=setTimeout(function(){S.toast='';render()},4000);render()}
+function toast(m,kind='notice'){S.toast=m;S.toastKind=kind;resumeToast();render()}
+function resumeToast(){clearTimeout(toastT);if(S.toastKind==='error')return;toastT=setTimeout(function(){S.toast='';render()},7000)}
 function rel(d){var a=Math.max(0,Math.floor((Date.now()-new Date(d))/60000));return a<1?'Just now':a<60?a+' min ago':a<1440?Math.floor(a/60)+' hours ago':Math.floor(a/1440)+' days ago'}
 function formName(id){var f=S.forms.filter(function(x){return x.id===id})[0];return f?f.name:'Deleted form'}
 function ep(id){return L?window.location.origin+'/f/'+id:'https://pentreeform.example/f/'+id.replace(/-demo$/,'')}
@@ -261,13 +262,14 @@ var modalOpener=null;
 function render(){
  var a=document.activeElement,keepQ=a&&a.id==='q',pos=keepQ?a.selectionStart:0,wasModal=!!host.querySelector('.modal');
  if(S.modal&&!wasModal&&a&&host.contains(a))modalOpener={action:a.getAttribute('data-a'),type:a.getAttribute('data-t'),value:a.getAttribute('data-v'),label:a.getAttribute('aria-label'),className:a.className};
- host.innerHTML=pbar()+(S.screen==='dashboard'?dashboard():auth())+prepareDialog(modalView())+(S.toast?'<div role="status" class="toast">'+ic('cok',18)+esc(S.toast)+'<button aria-label="Dismiss notification" data-a="toastx">'+ic('x',16)+'</button></div>':'');
+ host.innerHTML=pbar()+(S.screen==='dashboard'?dashboard():auth())+prepareDialog(modalView())+(S.toast?'<div role="'+(S.toastKind==='error'?'alert':'status')+'" aria-atomic="true" class="toast pf-toast'+(S.toastKind==='error'?' is-error':'')+'">'+brandMotionMarkup(S.toastKind)+'<span class="feedback-copy">'+esc(S.toast)+'</span>'+'<button aria-label="Dismiss notification" data-a="toastx">'+ic('x',16)+'</button></div>':'');
  document.title='Pentreeform · '+(S.screen==='dashboard'?S.page:'Account');
  if(keepQ){var q=document.getElementById('q');if(q){q.focus();q.setSelectionRange(pos,pos)}}
  if(S.modal){var d=host.querySelector('.modal');if(d)d.focus()}
  else if(wasModal&&modalOpener){var opener=Array.from(host.querySelectorAll('[data-a]')).find(function(button){return button.getAttribute('data-a')===modalOpener.action&&button.getAttribute('data-t')===modalOpener.type&&button.getAttribute('data-v')===modalOpener.value&&button.getAttribute('aria-label')===modalOpener.label&&button.className===modalOpener.className});if(opener)opener.focus();modalOpener=null}
  host.querySelectorAll('.shell,.auth,.pbar').forEach(function(node){node.inert=!!S.modal});
  document.body.style.overflow=S.modal?'hidden':oldOverflow;
+ syncPending();
 }
 function go(p){S.page=p;S.nav=false;S.detail=false;render();window.scrollTo(0,0)}
 function openAccount(mode){
@@ -279,6 +281,10 @@ function setScreen(s){S.screen=s;S.amsg='';S.tok=false;S.modal=null;S.mode=(s===
 
 /* ---------- events ---------- */
 var R=host;
+listen(R,'pointerover',function(e){if(e.target.closest('.toast'))clearTimeout(toastT)});
+listen(R,'pointerout',function(e){const t=e.target.closest('.toast');if(t&&!t.contains(e.relatedTarget))resumeToast()});
+listen(R,'focusin',function(e){if(e.target.closest('.toast'))clearTimeout(toastT)});
+listen(R,'focusout',function(e){const t=e.target.closest('.toast');if(t&&!t.contains(e.relatedTarget))resumeToast()});
 listen(R,'click',function(e){
  var t=e.target.closest('[data-a]');if(!t)return;
  var a=t.getAttribute('data-a'),v=t.getAttribute('data-v');
@@ -301,7 +307,7 @@ listen(R,'click',function(e){
   case 'profile-nav':S.modal=null;S.nav=false;go(v);break;
   case 'logout':openAccount('login');break;
   case 'close':S.modal=null;render();break;
-  case 'toastx':S.toast='';render();break;
+  case 'toastx':S.toast='';clearTimeout(toastT);render();break;
   case 'spamtoggle':var sm=S.msgs.filter(function(m){return m.id===v})[0];upd(v,{spam:!sm.spam});S.modal=null;toast(sm.spam?'Moved to inbox':'Moved to spam');break;
   case 'delmsg':S.msgs=S.msgs.filter(function(m){return m.id!==v});S.sel=null;S.modal=null;S.detail=false;persist();toast('Submission deleted');break;
   case 'doreset':S.forms=FORMS0;S.msgs=MSG0;S.set=SET0;S.sel='m0';S.modal=null;persist();toast('Workspace reset');break;
@@ -365,10 +371,23 @@ docs=function(){if(!L)return original.docs();const endpoint=S.forms[0]?ep(S.form
 modalView=function(){if(!L)return original.modalView();const m=S.modal;if(!m)return '';if(m.t==='archive')return '<div class="mb" data-a="mbclose"><section class="modal" role="dialog" aria-modal="true" aria-labelledby="mt" tabindex="-1"><div class="ph"><h2 id="mt">Archive this form?</h2><button class="ibtn" aria-label="Close dialog" data-a="close">'+ic('x',20)+'</button></div><p>This stops new submissions and frees an active form slot. Existing messages remain in your inbox.</p><button class="btn dng" data-a="archive" data-v="'+esc(m.v)+'">Archive form</button></section></div>';let h=original.modalView();if(m.t==='create'){h=h.replace('Choose a name, domain, and notification address.','Notifications are sent to your verified account email.').replace('name="email" type="email" required placeholder="you@example.com"','name="email" type="email" required readonly value="'+esc(L.user.email)+'"');if(L.user.plan!=='Free')h=h.replace('<button class="btn pri" type="submit">','<label class="field">Success redirect URL (optional)<input name="redirect" type="url" placeholder="https://example.com/thank-you"></label><button class="btn pri" type="submit">');}if(m.t==='setup'){h=h.replace('Form configuration','Live endpoint').replace('Your form configuration and connection details.','Add this endpoint to your website. Notifications go to your verified email.').replace(/<button class="btn pri" data-a="testlocal"[\s\S]*?<\/button>/,'<p>Open Documentation for the HTML and Turnstile setup instructions.</p>');}if(m.t==='del')h=h.replace('Delete this submission from this browser?','Delete this submission permanently from your account?');if(m.t==='privacy')h=h.replace(/<p>Forms, messages,[\s\S]*?<\/p><\/section>/,'<p>Messages are stored in your account database and sent to your verified email. Retention follows your plan; a downgrade to Free reduces history to 30 days. You can delete messages from your inbox.</p></section>');return h};
 dashboard=function(){let h=original.dashboard();if(!L)return h;return h.replace('Workspace','Live workspace')};
 let pending=false;
-async function action(fn){if(pending)return;pending=true;try{await fn()}catch(e){if(!disposed)toast(e.message||'The action could not be completed.')}finally{pending=false}}
+function syncPending(){
+ if(disposed)return;
+ const controls='button[type=submit],[data-a=archive],[data-a=plan],[data-a=manage],[data-a=refresh],[data-a=older],[data-a=logout]';
+ if(pending){
+  host.querySelectorAll(controls).forEach(button=>{if(!button.disabled){button.dataset.pendingDisabled='true';button.disabled=true}});
+  host.querySelectorAll('form').forEach(form=>form.setAttribute('aria-busy','true'));
+  if(!host.querySelector('.pf-pending'))host.insertAdjacentHTML('beforeend','<div class="pf-pending" role="status" aria-atomic="true">'+brandMotionMarkup()+'<span>Working…</span></div>');
+ }else{
+  host.querySelectorAll('[data-pending-disabled]').forEach(button=>{button.disabled=false;delete button.dataset.pendingDisabled});
+  host.querySelectorAll('form[aria-busy]').forEach(form=>form.removeAttribute('aria-busy'));
+  host.querySelector('.pf-pending')?.remove();
+ }
+}
+async function action(fn){if(pending)return;pending=true;syncPending();try{await fn()}catch(e){if(!disposed)toast(e.message||'The action could not be completed.','error')}finally{pending=false;syncPending()}}
 function liveClick(e,t,a,v){switch(a){
  case 'refresh':action(()=>L.refresh());return true;
- case 'logout':L.logout();return true;
+ case 'logout':action(()=>L.logout());return true;
  case 'older':action(()=>L.loadMore());return true;
  case 'manage':action(()=>L.manageBilling());return true;
  case 'plan':if(v==='Free')toast('Every account starts on Free. Paid access lasts through its paid period.');else action(()=>L.checkout(v));return true;

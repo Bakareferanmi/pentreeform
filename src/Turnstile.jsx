@@ -1,4 +1,5 @@
 import React,{useEffect,useRef,useState} from 'react';
+import {BrandMotion} from './Feedback.jsx';
 
 export default function Turnstile({siteKey,onToken,resetKey}){
  const host=useRef(null),callback=useRef(onToken);
@@ -45,7 +46,7 @@ export default function Turnstile({siteKey,onToken,resetKey}){
  const messages={loading:'Loading the security check…',ready:'Complete the check below to enable the button.',verified:'Security check complete. You can continue.',expired:'The security check expired. Please retry.',error:'The security check could not load or finish. Please retry.',unsupported:'This browser cannot complete the security check. Try an updated browser.',unavailable:'Security verification is not configured yet.'};
  const retry=['expired','error','unsupported'].includes(status);
  return <section className={'challenge challenge-'+status} aria-label="Security check">
-  <strong>Security check</strong>
+  <strong>{status==='loading'&&<BrandMotion/>}Security check</strong>
   <p id="security-status" role="status" aria-live="polite">{messages[status]}</p>
   {siteKey&&<div className="challenge-widget" ref={host}/>}
   {retry&&<button className="btn challenge-retry" type="button" onClick={()=>setAttempt(value=>value+1)}>Retry security check</button>}

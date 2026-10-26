@@ -1,0 +1,195 @@
+/* Final shared layer: the approved design, with consistent spacing and feedback. */
+:root:not([data-theme=dark]){--line:#ddd2e9;--line-2:#bcaaca;--muted:#5e516d}
+html{scroll-padding-top:84px}
+body{overflow-wrap:break-word}
+button,a,input,select,textarea{-webkit-tap-highlight-color:transparent}
+.btn,.btn.sm{min-height:44px;height:auto;padding-block:10px;line-height:1.4}
+.ibtn{min-width:44px;min-height:44px}
+.btn svg,.ibtn svg{flex-shrink:0}
+button:disabled{opacity:1}
+.btn:active:not(:disabled),.ibtn:active{transform:translateY(1px)}
+.logo svg{width:34px;height:34px}
+.side{padding:24px 18px 18px}
+.nav{gap:5px}
+.nav button{min-height:46px}
+.ws{margin-top:28px;margin-bottom:22px}
+.top{min-height:72px;height:auto;padding-block:10px;gap:14px}
+.wrap{padding-top:20px;padding-bottom:32px}
+.head{align-items:center;margin:16px 0 26px;gap:18px}
+.head h1{font-size:clamp(28px,2.6vw,36px);line-height:1.2;letter-spacing:-.035em}
+.head p{line-height:1.6}
+.stats{gap:16px}
+.stat{padding:20px;min-height:102px}
+.stat strong{font-size:28px;line-height:1.2}
+.card{box-shadow:0 2px 5px #26113e03,0 12px 28px -24px #26113e38}
+.inbox{min-height:580px}
+.flt{padding:18px 18px 14px;gap:10px}
+.search{min-height:46px;border-color:var(--line)}
+.flt select{height:44px;border-color:var(--line-2)}
+.tabs{padding:0 18px 14px;gap:6px}
+.tabs button{min-height:40px;padding:0 14px}
+.row{padding:18px;gap:12px}
+.open{gap:12px}
+.rt{flex-wrap:wrap;column-gap:8px;row-gap:2px}
+.rt strong{flex:1;min-width:90px}
+.rt small{font-size:12px}
+.subj{margin:5px 0 3px;font-size:14px;line-height:1.5}
+.snip{line-height:1.6}
+.message-statuses{gap:6px;margin-top:10px}
+.dp{padding:26px;min-width:0}
+.dh{gap:14px;flex-wrap:wrap}
+.dh h2{line-height:1.35;overflow-wrap:anywhere}
+.mbody{font-size:15px;line-height:1.8}
+.fcard{padding:24px}
+.fcard h2{line-height:1.35;overflow-wrap:anywhere}
+.field{font-size:14px;gap:9px;margin:20px 0;color:var(--text)}
+.field input,.field select,.field textarea{min-height:48px;font-size:16px;line-height:1.5;padding:11px 14px;border-color:var(--line-2)}
+.field textarea{height:auto;min-height:120px;resize:vertical}
+.field small{font-size:13px;line-height:1.6}
+.foot{padding-top:28px;gap:16px;line-height:1.6}
+.foot a,.foot button{min-height:44px}
+.tw{max-width:100%;overscroll-behavior-x:contain}
+.tr{padding-block:18px;line-height:1.55}
+.setp,.docs{width:100%}
+.docs p{font-size:15px;line-height:1.75}
+.modal>.modal-header{padding-block:22px}
+.modal>.modal-header h2{font-size:24px}
+.modal .field{margin-top:0}
+.modal-body{scrollbar-width:thin;scrollbar-color:var(--line-2) transparent}
+.modal>.modal-actions{gap:10px}
+.modal .modal-actions .btn{min-height:48px}
+.pbar{height:64px;gap:16px}
+.pbar>button:not(.theme-toggle){min-height:44px;padding:8px 12px;border:1px solid #9b83bd;border-radius:10px;line-height:1.4}
+.auth{min-height:calc(100dvh - 64px)}
+.story{padding:48px;gap:36px}
+.story h1{font-size:clamp(32px,3.5vw,48px);line-height:1.15}
+.story p{line-height:1.75}
+.amain{padding:48px 36px;gap:28px}
+.acard{max-width:420px}
+.acard h2{font-size:30px;line-height:1.25;margin-top:10px}
+.acard>p{font-size:15px;line-height:1.7}
+.asub,.google-btn{min-height:50px;font-size:15px}
+.links{gap:6px 18px;margin-top:18px}
+.links button{min-height:44px;font-size:14px;text-align:left}
+.amsg{display:flex;align-items:flex-start;gap:12px;padding:15px;font-size:14px;line-height:1.65}
+.amsg>span:last-child{flex:1;min-width:0;overflow-wrap:anywhere}
+.challenge{padding:16px}
+.challenge>strong{display:flex;align-items:center;gap:10px}
+.challenge-widget{overflow:hidden}
+.challenge p{font-size:14px;line-height:1.6}
+.google-note{font-size:13px;line-height:1.6}
+.loading{min-height:calc(100dvh - 64px)!important;padding:24px;max-width:600px}
+.state-card{padding:40px 28px;border-radius:24px;gap:26px}
+.state-copy{display:flex;flex-direction:column;align-items:center;gap:16px;width:100%;font-size:15px;line-height:1.7}
+.state-copy h2{font-size:24px;line-height:1.3}
+.state-copy .btn{width:100%;max-width:280px}
+
+/* A small pen movement belongs to this mark. The logo itself stays intact. */
+.brand-slot{display:inline-flex;flex-shrink:0;vertical-align:middle}
+.brand-motion{position:relative;display:inline-grid;place-items:center;width:36px;height:36px;flex-shrink:0;isolation:isolate}
+.brand-motion svg{display:block;width:100%;height:100%;overflow:visible;transform-origin:50% 80%}
+.brand-motion--loading svg{animation:brand-breathe 1.8s ease-in-out infinite}
+.brand-motion--loading svg>path:first-of-type{transform-origin:32px 42px;animation:brand-pen 1.8s ease-in-out infinite}
+.brand-motion--notice svg{animation:brand-settle .6s cubic-bezier(.2,.8,.2,1) both}
+.brand-motion--error svg{animation:brand-attention .4s ease-out both}
+.state-card>.brand-slot .brand-motion{width:64px;height:64px}
+.asub .brand-motion,.challenge .brand-motion{width:24px;height:24px}
+.amsg .brand-motion{width:30px;height:30px}
+@keyframes brand-breathe{0%,100%{transform:translateY(0);opacity:1}50%{transform:translateY(-3px);opacity:.85}}
+@keyframes brand-pen{0%,100%{transform:rotate(0)}35%{transform:rotate(-5deg)}65%{transform:rotate(4deg)}}
+@keyframes brand-settle{0%{transform:translateY(5px) scale(.85)}60%{transform:translateY(-2px) scale(1.04)}100%{transform:none}}
+@keyframes brand-attention{0%,100%{transform:none}35%{transform:translateX(-3px)}70%{transform:translateX(3px)}}
+@keyframes feedback-in{from{opacity:0;translate:0 10px}to{opacity:1;translate:0 0}}
+
+/* One feedback language for local interactions and server responses. */
+.toast.pf-toast,.live-banner.pf-toast{position:fixed;inset:auto max(24px,env(safe-area-inset-right)) max(24px,env(safe-area-inset-bottom)) auto;transform:none;z-index:140;display:flex;align-items:center;gap:12px;width:max-content;max-width:min(440px,calc(100vw - 48px));padding:14px 14px 14px 16px;border:1px solid #bda8d1;border-radius:18px;background:#fff;color:#251536;box-shadow:0 16px 48px -16px #25113750;font-size:14px;line-height:1.6;animation:feedback-in .25s ease-out both}
+.pf-toast .feedback-copy{flex:1;min-width:0;overflow-wrap:anywhere}
+.toast.pf-toast button,.live-banner.pf-toast button{display:inline-flex;min-width:44px;width:44px;height:44px;min-height:44px;margin:0;padding:0;border:0;border-radius:10px;background:transparent;color:#59416b;text-decoration:none}
+.pf-toast button:hover{background:#eee5f7}
+.pf-toast button svg{width:18px;height:18px;stroke-width:2}
+.pf-toast.is-error{border-color:#c18190;background:#fff7f8;color:#87243a}
+.pf-pending{position:fixed;right:max(24px,env(safe-area-inset-right));bottom:max(24px,env(safe-area-inset-bottom));z-index:139;display:flex;align-items:center;gap:12px;padding:12px 18px 12px 12px;border:1px solid var(--line-2);border-radius:16px;background:var(--card);color:var(--text);box-shadow:0 12px 38px -18px #25113760;font-size:14px;font-weight:600;pointer-events:none;animation:feedback-in .2s ease-out}
+[data-theme=dark] .toast.pf-toast,[data-theme=dark] .live-banner.pf-toast{background:#251a31;border-color:#88699e;color:#f2e9fc;box-shadow:0 16px 48px -16px #000a}
+[data-theme=dark] .pf-toast button{color:#e3cff4}
+[data-theme=dark] .pf-toast button:hover{background:#3d294e}
+[data-theme=dark] .pf-toast.is-error{background:#361e2b;border-color:#b8758a;color:#ffd3dd}
+
+@media(min-width:961px) and (max-width:1180px){
+ .side{width:240px}
+ .top,.wrap{padding-left:24px;padding-right:24px}
+ .top>.live{display:none}
+ .inbox{grid-template-columns:minmax(300px,48%) minmax(0,1fr)}
+ .dp{padding:22px}
+}
+@media(max-width:960px){
+ .side{top:0!important;height:100dvh!important}
+ .top{top:0;padding-inline:20px}
+ .wrap{padding:18px 20px 28px}
+ .auth{grid-template-columns:1fr}
+ .story{padding:28px;gap:24px}
+ .amain{padding:36px 24px}
+}
+@media(max-width:700px){
+ .top{min-height:68px;padding:10px 16px;gap:8px}
+ .head{margin:12px 0 22px;gap:18px}
+ .head h1{font-size:28px}
+ .head p{font-size:14px}
+ .acts{gap:10px}
+ .acts .btn{min-height:46px;font-size:14px}
+ .stats{gap:12px;margin-bottom:18px}
+ .stat{padding:16px;min-height:100px;gap:10px}
+ .stat strong{font-size:25px}
+ .stat small{font-size:12px;line-height:1.5}
+ .inbox{min-height:0}
+ .row{padding:16px 14px}
+ .dp{padding:22px 18px}
+ .flt{padding:16px 14px 12px}
+ .tabs{padding:0 14px 14px;gap:4px;flex-wrap:wrap}
+ .tabs button{padding:0 12px;font-size:13px}
+ .rt strong{min-width:70px}
+ .rt small{font-size:11px}
+ .snip{font-size:13px}
+ .status-pill,.message-state{font-size:11px;padding:3px 7px}
+ .story{padding:18px 24px;gap:0}
+ .auth .story>.demo{display:none}
+ .acard h2{font-size:28px}
+ .pbar{padding:8px 16px;height:auto;min-height:64px;gap:8px}
+ .pbar>button:not(.theme-toggle){font-size:12px;padding:8px}
+ .credit{font-size:12px;text-align:center}
+ .pad,.fcard,.pc{padding:20px}
+ .foot{gap:8px 18px}
+ .pf-nav{gap:16px}
+ .pf-nav-actions{gap:8px}
+ .pf-footer a{min-height:44px;display:inline-flex;align-items:center}
+ .toast.pf-toast,.live-banner.pf-toast{left:16px;right:16px;bottom:max(16px,env(safe-area-inset-bottom));width:auto;max-width:none;padding:12px;gap:10px;border-radius:16px}
+ .pf-pending{right:16px;bottom:max(16px,env(safe-area-inset-bottom))}
+}
+@media(max-width:380px){
+ .wrap{padding-inline:14px}
+ .top{padding-inline:12px}
+ .account-actions{gap:6px}
+ .account-actions button{padding-inline:9px;font-size:13px}
+ .account-profile .account-avatar{display:none}
+ .pbar{padding-inline:12px}
+ .pbar b{font-size:12px}
+ .stat{padding:14px}
+ .stats .stat{flex-direction:row;align-items:center}
+ .stat .ic{width:32px;height:32px}
+ .stat .ic svg{width:18px;height:18px}
+ .stat strong{font-size:22px}
+ .amain{padding:28px 20px}
+ .modal>.modal-header,.modal-body,.modal>.modal-actions{padding-left:18px;padding-right:18px}
+ .modal>.modal-header h2{font-size:22px}
+ .pf-toast .brand-motion{width:32px;height:32px}
+ .pf-toast{font-size:13px!important}
+}
+@media(prefers-reduced-motion:reduce){
+ .brand-motion svg,.brand-motion svg>path,.pf-toast,.pf-pending{animation:none!important;translate:none!important;transform:none!important}
+ .btn,.ibtn{transition:none!important}
+}
+@media(min-width:961px){.top>.burger{display:none}}
+@media(min-width:701px){.inbox{height:clamp(580px,calc(100dvh - 360px),760px)}.lp,.list{min-height:0}.dp{overflow:auto;overscroll-behavior:contain}}
+@media(max-width:380px){.stats .stat{flex-direction:column;align-items:flex-start;gap:10px}.stat small{overflow-wrap:normal}}
+.pf-toast button svg{color:inherit}
+.pbar:not(.screen-switcher)~.shell .top{top:64px}
+.pbar:not(.screen-switcher)~.shell .side{top:64px;height:calc(100dvh - 64px)}

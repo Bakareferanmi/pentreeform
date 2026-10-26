@@ -6,5 +6,6 @@ import './styles.css';
 import './support.css';
 import './landing.css';
 import './theme.css';
+import './polish.css';
 initTheme();
 createRoot(document.getElementById('root')).render(<React.StrictMode><LiveRoot/></React.StrictMode>);
