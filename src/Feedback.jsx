@@ -1,13 +1,13 @@
 import React,{useEffect,useRef,useState} from 'react';
 import {X} from 'lucide-react';
-import {brandMotionMarkup} from './brand.js';
+import {brandMotionMarkup,loadingScreenMarkup} from './brand.js';
 
 export function BrandMotion({state='loading'}){
  return <span className="brand-slot" dangerouslySetInnerHTML={{__html:brandMotionMarkup(state)}}/>;
 }
 
-export function LoadingScreen(){
- return <main className="brand-loading" role="status" aria-live="polite" aria-label="Loading Pentreeform"><BrandMotion/><span className="sr">Loading Pentreeform…</span></main>;
+export function LoadingScreen({overlay=false}){
+ return <div className="loading-host" dangerouslySetInnerHTML={{__html:loadingScreenMarkup(overlay)}}/>;
 }
 
 export function Toast({message,error=false,onDismiss}){

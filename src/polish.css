@@ -108,7 +108,6 @@ button:disabled{opacity:1}
 .pf-toast button:hover{background:#eee5f7}
 .pf-toast button svg{width:18px;height:18px;stroke-width:2}
 .pf-toast.is-error{border-color:#c18190;background:#fff7f8;color:#87243a}
-.pf-pending{position:fixed;right:max(24px,env(safe-area-inset-right));bottom:max(24px,env(safe-area-inset-bottom));z-index:139;display:flex;align-items:center;gap:12px;padding:12px 18px 12px 12px;border:1px solid var(--line-2);border-radius:16px;background:var(--card);color:var(--text);box-shadow:0 12px 38px -18px #25113760;font-size:14px;font-weight:600;pointer-events:none;animation:feedback-in .2s ease-out}
 [data-theme=dark] .toast.pf-toast,[data-theme=dark] .live-banner.pf-toast{background:#251a31;border-color:#88699e;color:#f2e9fc;box-shadow:0 16px 48px -16px #000a}
 [data-theme=dark] .pf-toast button{color:#e3cff4}
 [data-theme=dark] .pf-toast button:hover{background:#3d294e}
@@ -162,7 +161,6 @@ button:disabled{opacity:1}
  .pf-nav-actions{gap:8px}
  .pf-footer a{min-height:44px;display:inline-flex;align-items:center}
  .toast.pf-toast,.live-banner.pf-toast{left:16px;right:16px;bottom:max(16px,env(safe-area-inset-bottom));width:auto;max-width:none;padding:12px;gap:10px;border-radius:16px}
- .pf-pending{right:16px;bottom:max(16px,env(safe-area-inset-bottom))}
 }
 @media(max-width:380px){
  .wrap{padding-inline:14px}
@@ -184,7 +182,7 @@ button:disabled{opacity:1}
  .pf-toast{font-size:13px!important}
 }
 @media(prefers-reduced-motion:reduce){
- .brand-motion svg,.brand-motion svg>path,.pf-toast,.pf-pending{animation:none!important;translate:none!important;transform:none!important}
+ .brand-motion svg,.brand-motion svg>path,.pf-toast{animation:none!important;translate:none!important;transform:none!important}
  .btn,.ibtn{transition:none!important}
 }
 @media(min-width:961px){.top>.burger{display:none}}

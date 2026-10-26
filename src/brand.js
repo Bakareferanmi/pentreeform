@@ -7,3 +7,7 @@ export function brandMotionMarkup(state='loading'){
  const svg=BRAND_ICON.replace('role="img" aria-label="Pentreeform"','aria-hidden="true" focusable="false"');
  return '<span class="brand-motion brand-motion--'+motion+'" aria-hidden="true">'+svg+'</span>';
 }
+
+export function loadingScreenMarkup(overlay=false){
+ return '<main class="brand-loading'+(overlay?' request-loading':'')+'" role="status" aria-live="polite" aria-label="Loading Pentreeform">'+brandMotionMarkup()+'<span class="sr">Loading Pentreeform…</span></main>';
+}

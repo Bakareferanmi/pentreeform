@@ -1,6 +1,6 @@
 import {usageSummary} from '../shared/usage.js';
 import {getTheme,toggleTheme,themeLabel,THEME_EVENT} from './theme.js';
-import {BRAND_ICON,brandMotionMarkup} from './brand.js';
+import {BRAND_ICON,brandMotionMarkup,loadingScreenMarkup} from './brand.js';
 import {GOOGLE_ICON} from './google-brand.js';
 // Imported from the supplied design. Presentation CSS and demo markup are preserved.
 export function mountRedesign(host,options={}) {
@@ -377,12 +377,14 @@ function syncPending(){
  if(pending){
   host.querySelectorAll(controls).forEach(button=>{if(!button.disabled){button.dataset.pendingDisabled='true';button.disabled=true}});
   host.querySelectorAll('form').forEach(form=>form.setAttribute('aria-busy','true'));
-  if(!host.querySelector('.pf-pending'))host.insertAdjacentHTML('beforeend','<div class="pf-pending" role="status" aria-atomic="true">'+brandMotionMarkup()+'<span>Working…</span></div>');
+  if(!host.querySelector('.request-loading'))host.insertAdjacentHTML('beforeend',loadingScreenMarkup(true));
  }else{
   host.querySelectorAll('[data-pending-disabled]').forEach(button=>{button.disabled=false;delete button.dataset.pendingDisabled});
   host.querySelectorAll('form[aria-busy]').forEach(form=>form.removeAttribute('aria-busy'));
-  host.querySelector('.pf-pending')?.remove();
+  host.querySelector('.request-loading')?.remove();
  }
+ host.querySelectorAll('.shell,.auth,.pbar').forEach(node=>{node.inert=pending||!!S.modal});
+ host.querySelectorAll('.mb').forEach(node=>{node.inert=pending});
 }
 async function action(fn){if(pending)return;pending=true;syncPending();try{await fn()}catch(e){if(!disposed)toast(e.message||'The action could not be completed.','error')}finally{pending=false;syncPending()}}
 function liveClick(e,t,a,v){switch(a){

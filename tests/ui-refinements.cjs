@@ -25,12 +25,12 @@ let finishCreate,slowCalls=0;
 live.createForm=()=>{slowCalls++;return new Promise(resolve=>{finishCreate=resolve})};
 click('[data-t=create]');const slowForm=document.querySelector('.modal form');slowForm.elements.name.value='Keep this name';slowForm.elements.domain.value='slow.example.test';
 click('.modal-actions [type=submit]');
-assert.ok(document.querySelector('.pf-pending[role=status] .brand-motion--loading'));
+assert.ok(document.querySelector('.request-loading[role=status] .brand-motion--loading'));assert.equal(document.querySelector('.pf-pending'),null);assert.ok(!document.body.textContent.includes('Working…'));assert.equal(document.querySelector('.modal').closest('.mb').inert,true);
 assert.equal(slowForm.getAttribute('aria-busy'),'true');assert.equal(document.querySelector('.modal form'),slowForm);assert.equal(slowForm.elements.name.value,'Keep this name');assert.ok(document.querySelector('.modal-actions [type=submit]').disabled);
 slowForm.dispatchEvent(new dom.window.Event('submit',{bubbles:true,cancelable:true}));assert.equal(slowCalls,1);
-finishCreate({id:'slow-form',name:'Keep this name',domain:'slow.example.test',email:live.user.email});await new Promise(resolve=>setTimeout(resolve,0));assert.equal(document.querySelector('.pf-pending'),null);dialog('Form setup');close();
+finishCreate({id:'slow-form',name:'Keep this name',domain:'slow.example.test',email:live.user.email});await new Promise(resolve=>setTimeout(resolve,0));assert.equal(document.querySelector('.request-loading'),null);dialog('Form setup');close();
 // Failed actions restore controls and show escaped, dismissible branded feedback.
 live.manageBilling=async()=>{throw Error('<img src=x onerror=alert(1)> Request failed')};
 click('[data-a=nav][data-v="Usage & billing"]');click('[data-a=manage]');await new Promise(resolve=>setTimeout(resolve,0));
-const failure=document.querySelector('.pf-toast[role=alert]');assert.ok(failure.querySelector('.brand-motion--error'));assert.ok(!failure.querySelector('img'));assert.match(failure.textContent,/Request failed/);assert.equal(document.querySelector('.pf-pending'),null);assert.ok(!document.querySelector('[data-a=manage]').disabled);click('[data-a=toastx]');assert.equal(document.querySelector('.pf-toast'),null);
+const failure=document.querySelector('.pf-toast[role=alert]');assert.ok(failure.querySelector('.brand-motion--error'));assert.ok(!failure.querySelector('img'));assert.match(failure.textContent,/Request failed/);assert.equal(document.querySelector('.request-loading'),null);assert.ok(!document.querySelector('[data-a=manage]').disabled);click('[data-a=toastx]');assert.equal(document.querySelector('.pf-toast'),null);
 view.destroy();console.log('PASS: every delivery state has an icon and label; read state updates independently; accepted is not delivered; all dialog variants share headers/body/actions, native validation and footer submission work, focus is trapped/restored, Escape closes.');})().catch(e=>{console.error(e);process.exitCode=1}).finally(()=>{view?.destroy();dom.window.close();fs.unlinkSync(output)});

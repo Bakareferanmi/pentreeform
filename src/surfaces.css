@@ -1,0 +1,72 @@
+/* White and black foundations. Purple identifies actions; borders separate surfaces. */
+:root:not([data-theme=dark]){
+ --canvas:#ffffff;--card:#ffffff;--surface:#ffffff;--surface-soft:#f5f5f5;--surface-hover:#efefef;
+ --ink:#171717;--ink-2:#262626;--text:#202020;--muted:#595959;--line:#dedede;--line-2:#b8b8b8;
+ --purple:#6020c8;--purple-600:#4e139f;--purple-700:#3e0f80;--purple-100:#eee5fb;--purple-50:#f7f3fd;
+ --action:#6020c8;--action-hover:#4e139f;--accent-soft:#eee5fb;--accent-text:#4e139f;--shadow:none;
+}
+:root[data-theme=dark]{
+ --canvas:#000000;--card:#000000;--surface:#000000;--surface-soft:#111111;--surface-hover:#1b1b1b;
+ --ink:#fafafa;--ink-2:#ededed;--text:#eeeeee;--muted:#b3b3b3;--line:#303030;--line-2:#5c5c5c;
+ --purple:#c6a6ff;--purple-600:#d1baff;--purple-700:#ebdfff;--purple-100:#231533;--purple-50:#140c1e;
+ --action:#6020c8;--action-hover:#7531df;--accent-soft:#231533;--accent-text:#d1baff;--shadow:none;
+}
+*,*::before,*::after{box-shadow:none!important;text-shadow:none!important;background-image:none!important;backdrop-filter:none!important}
+:root[data-theme] :is(body,.pf-landing,.shell,.main,.top,.side,.pbar,.story,.amain,.card,.modal,.pf-screen,.pf-phone-nav,.pf-form-card,.pf-notification,.pf-price-grid,.pf-support-card,.pf-navlinks.open,.brand-loading){background-color:var(--canvas);color:var(--text)}
+:root[data-theme] :is(.top,.side,.pbar,.card,.modal,.pf-phone,.pf-form-card,.pf-notification,.pf-price-grid,.pf-price+.pf-price,.pf-footer,.pf-app-header,.pf-phone-nav,.pf-message-row,.pf-inbox-filter,.pf-support-card,.pf-navlinks.open){border-color:var(--line)}
+:root[data-theme] .side{border-right:1px solid var(--line)}
+:root[data-theme] .pbar{border-bottom:1px solid var(--line)}
+:root[data-theme] .pbar span{color:var(--muted)}
+:root[data-theme] .pbar>button:not(.theme-toggle){border-color:var(--line-2)}
+:root[data-theme] :is(.story:before,.start:after,.pf-orbit){display:none}
+:root[data-theme] :is(.story h1,.start h2,.pf-hero h1,.pf-section-heading h2,.pf-document h1,.pf-document h2,.pf-price h3,.pf-price li b,.pf-faq summary,.profile-identity strong){color:var(--ink)}
+:root[data-theme] :is(.story p,.start p,.pf-hero>p,.pf-section-heading p,.pf-document p,.pf-document li,.pf-faq details p,.pf-setup-note,.pf-price li span,.docs p,.modal p){color:var(--muted)}
+:root[data-theme] :is(.prom,.demo){color:var(--text)}
+:root[data-theme] .ws{background:var(--surface-soft);border-color:var(--line)}
+:root[data-theme] :is(.ws strong,.me strong,.plan .r){color:var(--text)}
+:root[data-theme] :is(.ws svg,.me svg,.me small,.plan .r span,.plan small){color:var(--muted)}
+:root[data-theme] :is(.nav button,.me){color:var(--text)}
+:root[data-theme] :is(.nav button:hover,.me:hover,.ws:hover,.plan:hover){background:var(--surface-hover);color:var(--text)}
+:root[data-theme] .nav .sep{background:var(--line)}
+:root[data-theme] .plan{background:var(--surface-soft);border-color:var(--line)}
+:root[data-theme] :is(.nav button.on,.tabs button.on,.cb:checked,.ws i){background:var(--action);border-color:var(--action);color:#fff}
+:root[data-theme] .bar{background:var(--line)}
+:root[data-theme] .bar i{background-color:var(--action)}
+:root[data-theme] .start{background:var(--canvas);border:1px solid var(--line);color:var(--text)}
+:root[data-theme] .start .badge{background:var(--accent-soft);color:var(--accent-text)}
+:root[data-theme] :is(.btn,.ibtn.bd,.theme-toggle,.account-actions button,.flt select,.field input,.field select,.field textarea,.modal .field input,.modal .field select,.modal .field textarea,.modal .btn,.modal .ph .ibtn,.pf-secondary,.pf-menu,.pf-navlinks .pf-signin){background:var(--surface);border-color:var(--line-2);color:var(--text)}
+:root[data-theme] :is(.btn:hover,.ibtn:hover,.theme-toggle:hover,.account-actions button:hover,.pf-secondary:hover,.pf-price:hover,.pf-motion-control:hover){background:var(--surface-hover);border-color:var(--line-2);color:var(--ink)}
+:root[data-theme] :is(.btn.pri,.modal .btn.pri,.pf-primary){background:var(--action);border-color:var(--action);color:#fff}
+:root[data-theme] :is(.btn.pri:hover,.modal .btn.pri:hover,.pf-primary:hover){background:var(--action-hover);border-color:var(--action-hover);color:#fff}
+:root[data-theme] :is(.btn:disabled,.modal .btn:disabled){background:var(--surface-soft);border-color:var(--line);color:var(--muted)}
+:root[data-theme] :is(.field input[readonly],.modal .field input[readonly]){background:var(--surface-soft);color:var(--muted)}
+:root[data-theme] :is(input::placeholder,textarea::placeholder){color:var(--muted);opacity:1}
+:root[data-theme] :is(.search,.search:focus-within,.mbody,.ep,.profile-identity,.modal>.modal-actions,.pf-message>p,.pf-phone){background:var(--surface-soft);color:var(--text);border-color:var(--line)}
+:root[data-theme] :is(.row:hover,.row.sel,.orow:hover){background:var(--surface-soft)}
+:root[data-theme] .row.sel:before{background:var(--action)}
+:root[data-theme] :is(.av,.av.c1,.av.c2,.av.c3,.account-avatar,.fic,.pf-avatar,.pf-message-row .shade-0,.pf-message-row .shade-2,.pf-inbox-icon,.pf-count,.pf-form-tag,.pf-notify-icon){background:var(--accent-soft);color:var(--accent-text)}
+:root[data-theme] :is(.profile-links,.profile-identity,.modal>.modal-header,.modal>.modal-actions,.modal .code,.pf-sample-field,.pf-walkthrough-steps button,.pf-faq-list,.pf-faq details){border-color:var(--line-2)}
+:root[data-theme] .profile-identity div>span{color:var(--muted)}
+:root[data-theme] .add{background:var(--canvas);border-color:var(--line-2)}
+:root[data-theme] .add:hover{background:var(--surface-soft)}
+:root[data-theme] :is(.code,.pf-code-card){background:var(--surface-soft);border:1px solid var(--line-2);color:var(--text)}
+:root[data-theme] :is(.code pre,.modal .code pre,.pf-code-card pre,.pf-code-card code){color:var(--text)}
+:root[data-theme] :is(.code .ibtn,.modal .code .ibtn,.pf-code-toolbar button,.pf-code-expand){background:var(--surface);border-color:var(--line-2);color:var(--text)}
+:root[data-theme] :is(.docs code,.pf-code-card mark){background:var(--accent-soft);color:var(--accent-text)}
+:root[data-theme] :is(.pf-navlinks a,.pf-home-link,.pf-footer a,.pf-document p a,.pf-motion-control,.links button,.pf-back){color:var(--accent-text)}
+:root[data-theme] :is(.pf-free,.pf-price span,.pf-price-note,.pf-footer,.pf-document .pf-policy-date,.pf-card-label,.pf-sample-field span,.pf-form-card small,.pf-row-name small,.pf-inbox-note,.pf-phone-nav button,.pf-sender small,.pf-notification p,.pf-inbox-heading>div>span,.pf-inbox-filter>span){color:var(--muted)}
+:root[data-theme] :is(.pf-price-featured,.pf-walkthrough-steps button,.pf-message-row.fresh){background:var(--surface-soft)}
+:root[data-theme] .pf-walkthrough-steps button[aria-pressed=true]{background:var(--accent-soft);border-color:var(--accent-text);color:var(--accent-text)}
+:root[data-theme] :is(.pf-phone.is-active,.pf-form-card.is-active,.pf-notification.is-active){border-color:var(--accent-text)}
+:root[data-theme] .pf-human img{filter:none!important}
+:root[data-theme] :is(.mb,.scrim){background:rgb(0 0 0 / .65)}
+:root[data-theme] :is(.toast.pf-toast,.live-banner.pf-toast){background:var(--surface);border-color:var(--line-2);color:var(--text)}
+:root[data-theme] .pf-toast button{color:var(--muted)}
+:root[data-theme] .pf-toast button:hover{background:var(--surface-hover);color:var(--text)}
+:root[data-theme] .pf-toast.is-error{border-color:var(--red);color:var(--red)}
+:root[data-theme] :is(.btn.dng,.modal .btn.dng){background:var(--surface);border-color:var(--red);color:var(--red)}
+.loading-host{display:contents}
+.request-loading{position:fixed;inset:0;z-index:200;min-height:100vh;min-height:100dvh;overflow:hidden}
+:root[data-theme] :is(.challenge,.info){background:var(--surface-soft);border-color:var(--line-2);color:var(--text)}
+:root[data-theme] :is(.challenge-error,.challenge-expired,.challenge-unsupported){border-color:var(--red)}
+:root[data-theme] .challenge .challenge-retry{background:var(--surface);border-color:var(--line-2);color:var(--accent-text)}
