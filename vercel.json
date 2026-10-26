@@ -1,6 +1,14 @@
 {
   "rewrites": [
     {
+      "source": "/api/:path*",
+      "destination": "https://pentreeform.bakareferanmi96.workers.dev/api/:path*"
+    },
+    {
+      "source": "/f/:path*",
+      "destination": "https://pentreeform.bakareferanmi96.workers.dev/f/:path*"
+    },
+    {
       "source": "/demo",
       "destination": "/index.html"
     },
@@ -39,6 +47,26 @@
     {
       "source": "/support/",
       "destination": "/index.html"
+    }
+  ],
+  "headers": [
+    {
+      "source": "/api/:path*",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "no-store"
+        }
+      ]
+    },
+    {
+      "source": "/f/:path*",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "no-store"
+        }
+      ]
     }
   ]
 }
