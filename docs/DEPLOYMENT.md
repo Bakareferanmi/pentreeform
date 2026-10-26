@@ -148,3 +148,19 @@ Test new signup, returning login, cancelled consent, stale state, same-email pas
 - https://paystack.com/docs/payments/subscriptions/
 - https://paystack.com/docs/payments/verify-payments/
 - https://paystack.com/docs/api/subscription/
+
+## Keep the current Vercel frontend
+
+When the frontend stays on `https://pentreeform.vercel.app`, keep that exact value as `APP_ORIGIN` in the Worker. After creating the D1 database and deploying the Worker, wire Vercel’s `/api/*` and `/f/*` paths to its actual HTTPS origin. Sessions, Google callbacks and email links then continue to use the public Vercel hostname.
+
+```sh
+npm run setup:deployment -- --public-origin https://pentreeform.vercel.app --worker-origin https://YOUR-WORKER.workers.dev --database-id YOUR-D1-UUID
+```
+
+This first command validates the values and prints a review without changing files. Add `--write` to save `wrangler.jsonc` and `vercel.json`. It preserves registration settings and does not accept or write API keys. Apply all D1 migrations and redeploy the Worker and frontend after saving the real values. External API and form responses must not be cached.
+
+```sh
+npm run check:deployment -- https://pentreeform.vercel.app
+```
+
+The checker verifies JSON responses from `/api/health` and `/api/config`, and a protected unauthenticated `/api/auth/me`. It rejects a static HTML response even when its HTTP status is 200. Health reports database/schema readiness and configuration flags; it cannot prove email delivery, Google account approval or successful payments.

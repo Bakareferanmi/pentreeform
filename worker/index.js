@@ -1,3 +1,4 @@
+import {health} from './health.js';
 import {PLANS,query,now,origin,csrf,account,publicUser,json,fail,readJSON,text,rate} from './core.js';
 import {authRoute} from './auth.js';
 import {googleConfigured} from './google.js';
@@ -8,6 +9,7 @@ function secure(response){const h=new Headers(response.headers);h.set('X-Content
 export async function handle(req,env,ctx={waitUntil(){}}){const path=new URL(req.url).pathname;
  try{
  if(!path.startsWith('/api/')&&!path.startsWith('/f/'))return secure(await env.ASSETS.fetch(req));
+ if(path==='/api/health'&&req.method==='GET')return secure(await health(env));
  if(!env.DB)fail(503,'Database binding is not configured.');
  if(path==='/api/config'&&req.method==='GET')return secure(json({registrationOpen:env.REGISTRATION_OPEN==='true'&&!!env.RESEND_API_KEY&&!!env.TURNSTILE_SECRET_KEY,googleConfigured:googleConfigured(env),googleRegistrationOpen:env.REGISTRATION_OPEN==='true'&&googleConfigured(env),turnstileSiteKey:env.TURNSTILE_SITE_KEY||'',emailConfigured:!!env.RESEND_API_KEY&&!!env.EMAIL_FROM&&!env.EMAIL_FROM.includes('YOUR-'),billingConfigured:!!env.PAYSTACK_SECRET_KEY,plans:PLANS}));
  if(path==='/api/webhooks/resend'&&req.method==='POST')return secure(await mailWebhook(req,env));
