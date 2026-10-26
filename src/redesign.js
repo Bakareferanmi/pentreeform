@@ -2,6 +2,7 @@ import {usageSummary} from '../shared/usage.js';
 import {getTheme,toggleTheme,themeLabel,THEME_EVENT} from './theme.js';
 import {BRAND_ICON,brandMotionMarkup,loadingScreenMarkup} from './brand.js';
 import {GOOGLE_ICON} from './google-brand.js';
+import {socialLinksMarkup} from './social-links.js';
 // Shared workspace presentation. Public routes always supply authenticated live data.
 export function mountRedesign(host,options={}) {
 let L=options.live||null,disposed=false;
@@ -220,7 +221,7 @@ function dashboard(){
  var hasActs=['Inbox','Forms','Overview'].indexOf(pg)>-1;
  return '<div class="shell">'+sidebar()+'<main class="main"><header class="top"><button class="ibtn burger" aria-label="Open navigation" data-a="navopen">'+ic('menu')+'</button><span class="grow"></span><div class="account-actions" data-account-actions>'+themeButton()+'<button class="account-profile" data-a="modal" data-t="profile" aria-label="Profile" aria-haspopup="dialog"><span class="account-avatar" aria-hidden="true">'+esc(ini(S.set.name||'User'))+'</span></button><button class="account-signout quiet" data-a="modal" data-t="signout" aria-haspopup="dialog">Sign out</button></div></header>'+
  '<div class="wrap"><div class="head"><div><h1'+(L?' tabindex="-1"':'')+'>'+esc(pg)+'</h1></div>'+(hasActs?'<div class="acts"><button class="btn quiet" data-a="export">'+ic('dl',17)+'Export</button><button class="btn pri" data-a="modal" data-t="create">'+ic('plus',19)+'New form</button></div>':'')+'</div>'+usageAlert()+body+
- '<footer class="foot"><span>© '+new Date().getFullYear()+' Pentreeform</span><a href="https://www.beepeelabs.cv/" target="_blank" rel="noreferrer">Built by BeepeeLabs '+ic('ur',13)+'</a><button data-a="modal" data-t="privacy">Data & privacy</button></footer></div></main></div>';
+ '<footer class="foot"><span>© '+new Date().getFullYear()+' Pentreeform</span><a href="https://www.beepeelabs.cv/" target="_blank" rel="noreferrer">Built by BeepeeLabs '+ic('ur',13)+'</a><button data-a="modal" data-t="privacy">Data & privacy</button>'+socialLinksMarkup()+'</footer></div></main></div>';
 }
 function auth(){
  var m=S.mode,v=S.screen==='verify',need=['register','forgot','resend'].indexOf(m)>-1||v;
@@ -394,7 +395,7 @@ function exportCSV(){if(L){L.exportCSV({form:S.ff,days:S.df,tab:S.tab,q:S.q});re
 const original={sidebar,detail,inbox,overview,formsPage,deliveries,billing,settings,docs,modalView,pbar,dashboard};
 function syncLive(next){L=next;if(!L)return;S.forms=L.forms;S.msgs=L.messages;S.set=L.settings;if(!S.msgs.some(m=>m.id===S.sel))S.sel=S.msgs[0]?.id||null;}
 pbar=function(){return L?'':original.pbar()};
-sidebar=function(){let h=original.sidebar();if(!L)return h;const usage=monthlyUsage();h=h.replace('<strong>Starter</strong>','<strong>'+esc(L.user.plan)+' plan</strong>').replace(S.msgs.filter(m=>!m.spam).length+' / 1,000',esc(L.usage)+' / '+esc(L.limit.toLocaleString()));if(!usage)return h;h=h.replace('class="plan"','class="plan" data-usage-level="'+usage.level+'" aria-label="Usage: '+usage.used.toLocaleString()+' of '+usage.limit.toLocaleString()+' submissions this month"');return h.replace(/style="width:[^\"]+"/,'style="width:'+usage.progress+'%"')};
+sidebar=function(){let h=original.sidebar();if(!L)return h;h=h.replace(/<button class="me"[\s\S]*?<\/button>/,'');const usage=monthlyUsage();h=h.replace('<strong>Starter</strong>','<strong>'+esc(L.user.plan)+' plan</strong>').replace(S.msgs.filter(m=>!m.spam).length+' / 1,000',esc(L.usage)+' / '+esc(L.limit.toLocaleString()));if(!usage)return h;h=h.replace('class="plan"','class="plan" data-usage-level="'+usage.level+'" aria-label="Usage: '+usage.used.toLocaleString()+' of '+usage.limit.toLocaleString()+' submissions this month"');return h.replace(/style="width:[^\"]+"/,'style="width:'+usage.progress+'%"')};
 detail=function(m){let h=original.detail(m);if(!L)return h;const fields=Object.entries(m.fields||{}).filter(([key])=>!['name','email','message','subject'].includes(key));return h.replace('</dl>',fields.map(([k,v])=>'<dt>'+esc(k)+'</dt><dd>'+esc(v)+'</dd>').join('')+'</dl>')};
 inbox=function(){let h=original.inbox();if(!L)return h;h=h.replace('placeholder="Search submissions"','placeholder="Search loaded submissions"');if(L.nextCursor)h=h.replace('</div></div><div class="dp">','</div><button class="btn sm" data-a="older">Load older submissions</button></div><div class="dp">');return h};
 overview=function(){const h=original.overview();return L?h.replace('Review your inbox','Your account is verified').replace('Connect your website form','Connect your website form'):h};

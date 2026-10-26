@@ -105,3 +105,19 @@
 .pf-phone-nav a{display:flex;flex-direction:column;gap:4px;align-items:center;min-width:70px;min-height:44px;color:var(--muted);font-size:9px;font-weight:600}
 .pf-illustration-status{display:flex;align-items:center;justify-content:center;gap:8px;min-height:48px;color:var(--accent-text);font-weight:600}
 @media(prefers-reduced-motion:reduce){.shell .nav button{transition:none}}
+
+/* Keep sidebar usage reachable on short screens and clear of browser safe areas. */
+.shell .side{overflow-y:auto;overscroll-behavior-y:contain;scrollbar-width:thin;padding-bottom:max(18px,env(safe-area-inset-bottom))}
+.shell .side>*{flex-shrink:0}
+.shell .side-bot{padding-top:20px;gap:0}
+.shell .plan{padding:14px;border-radius:12px}
+.shell .plan .r{align-items:center;gap:10px;flex-wrap:wrap;line-height:1.5}
+.shell .plan .r span{white-space:nowrap;font-variant-numeric:tabular-nums}
+.shell .plan .bar{height:5px}
+:root[data-theme] :is(.pf-footer,.foot) .social-links{display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap}
+:root[data-theme] :is(.pf-footer,.foot) .social-links a{display:inline-flex;align-items:center;justify-content:center;width:44px;min-width:44px;height:44px;min-height:44px;padding:0;border:1px solid var(--button-stroke);border-radius:50%;background:var(--surface);color:var(--text);text-decoration:none}
+:root[data-theme] :is(.pf-footer,.foot) .social-links a:hover{background:var(--surface-soft);border-color:var(--button-stroke-hover);color:var(--accent-text)}
+:root[data-theme] :is(.pf-footer,.foot) .social-links a:focus-visible{outline:2px solid var(--accent-text);outline-offset:3px}
+.social-links svg{flex-shrink:0}
+.foot{align-items:center;flex-wrap:wrap;gap:16px}
+@media(max-width:700px){.pf-footer .social-links,.foot .social-links{width:100%}.shell .side{scroll-padding-bottom:24px}}
