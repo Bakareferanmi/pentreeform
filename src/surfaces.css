@@ -70,3 +70,14 @@
 :root[data-theme] :is(.challenge,.info){background:var(--surface-soft);border-color:var(--line-2);color:var(--text)}
 :root[data-theme] :is(.challenge-error,.challenge-expired,.challenge-unsupported){border-color:var(--red)}
 :root[data-theme] .challenge .challenge-retry{background:var(--surface);border-color:var(--line-2);color:var(--accent-text)}
+
+/* Retain the original purple sidebar and getting-started panel as brand surfaces. */
+:root[data-theme] :is(.side,.start){
+ --canvas:#1c0f33;--card:#1c0f33;--surface:#1c0f33;--surface-soft:#2a1d40;--surface-hover:#36264d;
+ --ink:#ffffff;--ink-2:#e9defa;--text:#e9defa;--muted:#cdbfe6;--line:#49375e;--line-2:#6c5387;
+ --accent-soft:#36234f;--accent-text:#e1cbff;
+ background-color:var(--canvas);color:var(--text);
+}
+:root[data-theme=dark] .side{--canvas:#170e23;--card:#170e23;--surface:#170e23}
+:root[data-theme=dark] .start{--canvas:#1d122b;--card:#1d122b;--surface:#1d122b}
+:root[data-theme] .start .btn{--surface:#ffffff;--surface-hover:#f5f5f5;--ink:#3e0f80;--text:#3e0f80;--line-2:#ffffff}
