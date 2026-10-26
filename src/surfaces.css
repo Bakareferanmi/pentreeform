@@ -1,13 +1,13 @@
 /* White and black foundations. Purple identifies actions; borders separate surfaces. */
 :root:not([data-theme=dark]){
  --canvas:#ffffff;--card:#ffffff;--surface:#ffffff;--surface-soft:#f5f5f5;--surface-hover:#efefef;
- --ink:#171717;--ink-2:#262626;--text:#202020;--muted:#595959;--line:#dedede;--line-2:#b8b8b8;
+ --ink:#171717;--ink-2:#262626;--text:#202020;--muted:#595959;--line:#e4dbf0;--line-2:#b9a9ce;
  --purple:#6020c8;--purple-600:#4e139f;--purple-700:#3e0f80;--purple-100:#eee5fb;--purple-50:#f7f3fd;
  --action:#6020c8;--action-hover:#4e139f;--accent-soft:#eee5fb;--accent-text:#4e139f;--shadow:none;
 }
 :root[data-theme=dark]{
  --canvas:#000000;--card:#000000;--surface:#000000;--surface-soft:#111111;--surface-hover:#1b1b1b;
- --ink:#fafafa;--ink-2:#ededed;--text:#eeeeee;--muted:#b3b3b3;--line:#303030;--line-2:#5c5c5c;
+ --ink:#fafafa;--ink-2:#ededed;--text:#eeeeee;--muted:#b3b3b3;--line:#392d47;--line-2:#655574;
  --purple:#c6a6ff;--purple-600:#d1baff;--purple-700:#ebdfff;--purple-100:#231533;--purple-50:#140c1e;
  --action:#6020c8;--action-hover:#7531df;--accent-soft:#231533;--accent-text:#d1baff;--shadow:none;
 }
@@ -82,9 +82,9 @@
 :root[data-theme=dark] .start{--canvas:#1d122b;--card:#1d122b;--surface:#1d122b}
 :root[data-theme] .start .btn{--surface:#ffffff;--surface-hover:#f5f5f5;--ink:#3e0f80;--text:#3e0f80;--line-2:#ffffff}
 
-/* Light, consistent outlines without reducing keyboard focus visibility. */
-:root:not([data-theme=dark]){--button-stroke:#c4c4c4;--button-stroke-hover:#a0a0a0}
-:root[data-theme=dark]{--button-stroke:#484848;--button-stroke-hover:#737373}
+/* Subtle purple outlines, with stronger hover and keyboard focus contrast. */
+:root:not([data-theme=dark]){--button-stroke:#c9b9df;--button-stroke-hover:#a28aba}
+:root[data-theme=dark]{--button-stroke:#564465;--button-stroke-hover:#8b73a6}
 :root[data-theme] :is(.btn,.ibtn.bd,.theme-toggle,.account-actions button,.modal .btn,.modal .ph .ibtn,.pf-secondary,.pf-menu,.pf-navlinks .pf-signin,.pf-code-toolbar button,.pf-code-expand,.pf-walkthrough-steps button,.pbar>button:not(.theme-toggle),.code .ibtn){border-width:1px;border-color:var(--button-stroke)}
 :root[data-theme] :is(.btn:hover,.ibtn.bd:hover,.theme-toggle:hover,.account-actions button:hover,.modal .btn:hover,.modal .ph .ibtn:hover,.pf-secondary:hover,.pf-menu:hover,.pf-navlinks .pf-signin:hover,.pf-code-toolbar button:hover,.pf-code-expand:hover){border-color:var(--button-stroke-hover)}
 :root[data-theme] :is(.btn.pri,.modal .btn.pri,.pf-primary){border-width:1px;border-color:var(--action)}
