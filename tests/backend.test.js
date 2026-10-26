@@ -4,6 +4,7 @@ import {DatabaseSync} from 'node:sqlite';
 import {readFileSync} from 'node:fs';
 import {handle,cleanup} from '../worker/index.js';
 import {drain} from '../worker/mail.js';
+import {challenge} from '../worker/auth.js';
 import {hash,hmac,now,uid} from '../worker/core.js';
 function database(){const db=new DatabaseSync(':memory:');for(const file of ['0001_initial.sql','0002_google_auth.sql','0003_usage_alerts.sql'])db.exec(readFileSync(new URL('../migrations/'+file,import.meta.url),'utf8'));const prepare=(sql,args=[])=>({bind(...values){return prepare(sql,values)},async first(){return db.prepare(sql).get(...args)||null},async all(){return {results:db.prepare(sql).all(...args)}},async run(){const r=db.prepare(sql).run(...args);return {meta:{changes:r.changes}}}});return {raw:db,prepare,async batch(statements){db.exec('BEGIN');try{const r=[];for(const statement of statements)r.push(await statement.run());db.exec('COMMIT');return r}catch(e){db.exec('ROLLBACK');throw e}}}}
 function fixture(){const DB=database(),emails=[],calls=[],env={DB,APP_ORIGIN:'https://app.test',EMAIL_FROM:'Pentreeform <forms@app.test>',RESEND_API_KEY:'test-resend',RESEND_WEBHOOK_SECRET:'whsec_'+btoa('a-test-webhook-secret'),TURNSTILE_SECRET_KEY:'test-turnstile',TURNSTILE_SITE_KEY:'site-key',REGISTRATION_OPEN:'true',PAYSTACK_SECRET_KEY:'test-paystack',PAYSTACK_PLAN_STARTER:'PLN_starter'};const transactions=new Map(),subscriptions=new Map();const originalFetch=globalThis.fetch;
@@ -62,3 +63,59 @@ test('queued usage warnings are cancelled after an upgrade, a reset, or a newer 
  }finally{f.close()}});
 
 test('public deployment health reports schema readiness without exposing secrets',async()=>{const f=fixture();try{let response=await f.request('/api/health');assert.equal(response.status,200);let body=await response.json();assert.equal(body.checks.database,true);assert.equal(body.checks.schema,true);assert.equal(body.applicationOrigin,'https://app.test');assert.equal(body.configured.turnstile,true);assert.ok(!JSON.stringify(body).includes('test-resend'));assert.ok(!JSON.stringify(body).includes('test-paystack'));f.DB.raw.exec('DROP TABLE usage_alerts');response=await f.request('/api/health');assert.equal(response.status,503);body=await response.json();assert.equal(body.checks.schema,false);const missing=await handle(new Request('https://app.test/api/health'),{});assert.equal(missing.status,503);assert.equal((await missing.json()).checks.database,false)}finally{f.close()}});
+
+
+test('Turnstile verifies proxied requests without confusing the proxy IP with the visitor, and enforces action and hostname',async()=>{
+ const f=fixture(),warnings=[],originalWarn=console.warn;
+ console.warn=(...args)=>warnings.push(args.join(' '));
+ let outcome={success:true,hostname:'app.test',action:'auth'};
+ try{
+  f.env.TURNSTILE_SECRET_KEY='  synthetic-secret  ';
+  globalThis.fetch=async(url,options)=>{
+   assert.equal(url,'https://challenges.cloudflare.com/turnstile/v0/siteverify');
+   assert.equal(options.body.get('secret'),'synthetic-secret');
+   assert.equal(options.body.get('response'),'synthetic-response');
+   assert.equal(options.body.has('remoteip'),false,'Do not send a reverse proxy IP or trust client-supplied forwarded headers');
+   return Response.json(outcome);
+  };
+  const request=new Request('https://backend.workers.dev/api/auth/register',{headers:{'CF-Connecting-IP':'192.0.2.1','X-Forwarded-For':'198.51.100.1'}});
+  assert.equal((await challenge(request,f.env,'synthetic-response','auth')).success,true);
+  outcome={success:true,hostname:'app.test',action:'submission'};
+  await assert.rejects(challenge(request,f.env,'synthetic-response','auth'),error=>error.status===400&&/does not match this page/.test(error.message));
+  outcome={success:true,hostname:'other.test',action:'auth'};
+  await assert.rejects(challenge(request,f.env,'synthetic-response','auth'),error=>error.status===400&&/does not match this website/.test(error.message));
+  assert.match(warnings.join(' '),/action_mismatch/);assert.match(warnings.join(' '),/hostname_mismatch/);
+  assert.ok(!warnings.join(' ').includes('synthetic-secret'));assert.ok(!warnings.join(' ').includes('synthetic-response'));
+ }finally{console.warn=originalWarn;f.close()}
+});
+
+test('Turnstile failures remain closed and distinguish configuration, expired tokens and outages without logging credentials',async()=>{
+ const f=fixture(),warnings=[],originalWarn=console.warn;
+ console.warn=(...args)=>warnings.push(args.join(' '));
+ try{
+  const request=new Request('https://app.test/api/auth/register');
+  for(const [code,status,message] of [['invalid-input-secret',503,/not configured correctly/],['timeout-or-duplicate',400,/expired or was already used/],['internal-error',503,/service is unavailable/],['invalid-input-response',400,/complete a fresh check/i],['test-turnstile',400,/complete a fresh check/i]]){
+   globalThis.fetch=async()=>Response.json({success:false,'error-codes':[code],secret:'test-turnstile',response:'synthetic-response'});
+   await assert.rejects(challenge(request,f.env,'synthetic-response','auth'),error=>error.status===status&&message.test(error.message));
+  }
+  globalThis.fetch=async()=>{throw Error('Do not expose test-turnstile or synthetic-response')};
+  await assert.rejects(challenge(request,f.env,'synthetic-response','auth'),error=>error.status===503&&/service is unavailable/.test(error.message));
+  globalThis.fetch=async()=>new Response('<html>Unavailable</html>',{status:502});
+  await assert.rejects(challenge(request,f.env,'synthetic-response','auth'),error=>error.status===503);
+  assert.ok(!warnings.join(' ').includes('test-turnstile'));assert.ok(!warnings.join(' ').includes('synthetic-response'));
+  assert.equal(f.DB.raw.prepare('SELECT count(*) n FROM users').get().n,0);
+ }finally{console.warn=originalWarn;f.close()}
+});
+
+test('failed security checks do not exhaust the per-email signup allowance',async()=>{
+ const f=fixture(),originalWarn=console.warn,provider=globalThis.fetch;console.warn=()=>{};
+ try{
+  globalThis.fetch=async(url,options)=>String(url).includes('turnstile/v0/siteverify')?Response.json({success:false,'error-codes':['invalid-input-response']}):provider(url,options);
+  const data={email:'retry@example.com',password:'synthetic long password',name:'Retry Test',challenge:'invalid-auth'};
+  for(let attempt=0;attempt<4;attempt++)assert.equal((await f.request('/api/auth/register',{method:'POST',data})).status,400);
+  assert.equal(f.DB.raw.prepare('SELECT count(*) n FROM users').get().n,0);assert.equal(f.emails.length,0);
+  globalThis.fetch=provider;
+  assert.equal((await f.request('/api/auth/register',{method:'POST',data:{...data,challenge:'valid-auth'}})).status,201);
+  assert.equal(f.emails.length,1);
+ }finally{console.warn=originalWarn;f.close()}
+});
