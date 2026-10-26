@@ -191,5 +191,7 @@ button:disabled{opacity:1}
 @media(min-width:701px){.inbox{height:clamp(580px,calc(100dvh - 360px),760px)}.lp,.list{min-height:0}.dp{overflow:auto;overscroll-behavior:contain}}
 @media(max-width:380px){.stats .stat{flex-direction:column;align-items:flex-start;gap:10px}.stat small{overflow-wrap:normal}}
 .pf-toast button svg{color:inherit}
-.pbar:not(.screen-switcher)~.shell .top{top:64px}
-.pbar:not(.screen-switcher)~.shell .side{top:64px;height:calc(100dvh - 64px)}
+.shell{min-height:100dvh}
+.shell .top{top:0}
+.shell .side{top:0;height:100dvh}
+.shell .scrim{inset:0}
