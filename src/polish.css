@@ -46,6 +46,14 @@ button:disabled{opacity:1}
 .field input,.field select,.field textarea{min-height:48px;font-size:16px;line-height:1.5;padding:11px 14px;border-color:var(--line-2)}
 .field textarea{height:auto;min-height:120px;resize:vertical}
 .field small{font-size:13px;line-height:1.6}
+.password-control{position:relative;display:flex;align-items:center}
+.password-control input{padding-right:76px}
+.password-toggle{position:absolute;right:4px;top:2px;bottom:2px;min-width:64px;min-height:44px;padding:0 12px;border:0;border-radius:9px;background:transparent;color:var(--accent-text,var(--purple));font-size:13px;font-weight:600}
+.password-toggle:hover{background:var(--accent-soft)}
+.password-toggle:focus-visible{outline:2px solid var(--accent-text,var(--purple));outline-offset:-2px}
+.field .password-error{color:#b42340}
+[data-theme=dark] .field .password-error{color:#ffabbc}
+
 .foot{padding-top:28px;gap:16px;line-height:1.6}
 .foot a,.foot button{min-height:44px}
 .tw{max-width:100%;overscroll-behavior-x:contain}
