@@ -42,3 +42,19 @@ export async function queueExistingWelcomes(env,limit=5){
  if(!users.length)return;
  await env.DB.batch(users.flatMap(user=>welcomeStatements(env,user)));
 }
+
+export async function queueWelcomeSignatureResends(env,limit=5){
+ const {results:users}=await query(env,`SELECT u.id,u.name,u.email FROM welcome_signature_resends r JOIN users u ON u.id=r.user_id
+  WHERE r.queued=0 AND u.verified=1
+  AND NOT EXISTS(SELECT 1 FROM suppressions WHERE email=u.email)
+  AND NOT EXISTS(SELECT 1 FROM outbox WHERE user_id=u.id AND kind='welcome' AND state IN ('queued','sending'))
+  ORDER BY u.created_at,u.id LIMIT ?`,limit).all();
+ if(!users.length)return;
+ const stamp=now();
+ await env.DB.batch(users.flatMap(user=>[
+  query(env,`INSERT INTO outbox(id,user_id,recipient,payload,kind,available_at,created_at)
+   SELECT ?,u.id,u.email,?,'welcome-signature',?,? FROM users u JOIN welcome_signature_resends r ON r.user_id=u.id
+   WHERE u.id=? AND u.verified=1 AND r.queued=0`,uid(),JSON.stringify(welcomeMessage(env,user)),stamp,stamp,user.id),
+  query(env,'UPDATE welcome_signature_resends SET queued=1 WHERE user_id=?',user.id)
+ ]));
+}

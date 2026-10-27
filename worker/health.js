@@ -1,6 +1,6 @@
 import {query,json,origin} from './core.js';
 import {googleConfigured} from './google.js';
-const tables=['users','sessions','auth_tokens','forms','submissions','monthly_usage','rate_limits','outbox','email_events','suppressions','checkouts','subscriptions','billing_events','google_identities','oauth_states','google_link_requests','usage_alerts','pending_submissions'];
+const tables=['users','sessions','auth_tokens','forms','submissions','monthly_usage','rate_limits','outbox','email_events','suppressions','checkouts','subscriptions','billing_events','google_identities','oauth_states','google_link_requests','usage_alerts','pending_submissions','welcome_signature_resends'];
 export async function health(env){
  let database=false,schema=false,applicationOrigin=null;
  try{applicationOrigin=origin(env)}catch{}

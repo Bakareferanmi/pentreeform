@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {DatabaseSync} from 'node:sqlite';
 import {readFileSync} from 'node:fs';
 import {fixture} from './fixture.js';
-import {welcomeMessage,welcomeStatements,queueExistingWelcomes} from '../worker/welcome.js';
+import {welcomeMessage,welcomeStatements,queueExistingWelcomes,queueWelcomeSignatureResends} from '../worker/welcome.js';
 import {drain} from '../worker/mail.js';
 import worker,{cleanup} from '../worker/index.js';
 import {now,uid} from '../worker/core.js';
@@ -93,3 +93,52 @@ test('existing-account migration includes excluded users and excludes every prev
  insert('new');assert.deepEqual({...db.prepare("SELECT welcome_email_queued,welcome_email_backfill FROM users WHERE id='new'").get()},{welcome_email_queued:0,welcome_email_backfill:0});
  }finally{db.close()}
 });
+
+function snapshotSignatureResends(f){
+ f.DB.raw.exec('DROP TABLE welcome_signature_resends');
+ f.DB.raw.exec(readFileSync(new URL('../migrations/0008_welcome_signature_resend.sql',import.meta.url),'utf8'));
+}
+const refreshCount=f=>f.DB.raw.prepare("SELECT count(*) n FROM outbox WHERE kind='welcome-signature'").get().n;
+
+test('the three existing recipients get the updated signature once, including after cleanup; later accounts get no refresh',async()=>{const f=fixture();try{
+ for(let i=0;i<3;i++){const owner=user(f,`old${i}@example.test`);await f.DB.batch(welcomeStatements(f.env,owner))}
+ await drain(f.env);assert.equal(f.emails.length,3);
+ snapshotSignatureResends(f);const future=user(f,'future@example.test');await f.DB.batch(welcomeStatements(f.env,future));
+ await scheduled(f);assert.equal(refreshCount(f),3);assert.equal(f.emails.length,7);
+ const refreshed=f.emails.slice(3).filter(email=>email.to[0]!==future.email);assert.equal(refreshed.length,3);
+ for(const email of refreshed){assert.match(email.text,/Bakare Feranmi\nFounder\nPentreeform/);assert.match(email.html,/<strong>Bakare Feranmi<\/strong><br><span[^>]+>Founder<br>Pentreeform/)}
+ await scheduled(f);await queueWelcomeSignatureResends(f.env);assert.equal(f.emails.length,7);
+ f.DB.raw.prepare("UPDATE outbox SET created_at=? WHERE kind='welcome-signature'").run(now()-31*86400);await cleanup(f.env);assert.equal(refreshCount(f),0);await scheduled(f);assert.equal(f.emails.length,7);
+ assert.equal(f.DB.raw.prepare('SELECT count(*) n FROM welcome_signature_resends WHERE queued=1').get().n,3);
+ assert.equal(f.DB.raw.prepare('SELECT count(*) n FROM welcome_signature_resends WHERE user_id=?').get(future.id).n,0);
+ }finally{f.close()}});
+
+test('signature refresh snapshots verified accounts, waits for pending welcomes and respects suppression and recipient changes',async()=>{const f=fixture();try{
+ const pending=user(f,'pending@example.test');await f.DB.batch(welcomeStatements(f.env,pending));
+ const blocked=user(f,'blocked-refresh@example.test'),changed=user(f,'changed-refresh@example.test'),unverified=user(f,'unverified-refresh@example.test'),revoked=user(f,'revoked-refresh@example.test');
+ f.DB.raw.prepare('UPDATE users SET verified=0 WHERE id=?').run(unverified.id);snapshotSignatureResends(f);
+ f.DB.raw.prepare("INSERT INTO suppressions(email,reason,created_at) VALUES(?,'complained',?)").run(blocked.email,now());
+ await queueWelcomeSignatureResends(f.env);assert.equal(refreshCount(f),2);assert.equal(f.DB.raw.prepare('SELECT queued FROM welcome_signature_resends WHERE user_id=?').get(pending.id).queued,0);
+ f.DB.raw.prepare("UPDATE users SET email='replacement@example.test' WHERE id=?").run(changed.id);f.DB.raw.prepare('UPDATE users SET verified=0 WHERE id=?').run(revoked.id);
+ await drain(f.env);assert.equal(f.emails.length,1);assert.equal(f.emails[0].to[0],pending.email);
+ assert.equal(f.DB.raw.prepare("SELECT count(*) n FROM outbox WHERE kind='welcome-signature' AND state='cancelled'").get().n,2);
+ await scheduled(f);assert.equal(f.emails.length,2);assert.equal(f.emails[1].to[0],pending.email);
+ assert.equal(f.DB.raw.prepare('SELECT count(*) n FROM welcome_signature_resends WHERE user_id=?').get(unverified.id).n,0);
+ }finally{f.close()}});
+
+test('signature refresh claims are atomic and provider retries keep the same key and body',async()=>{const f=fixture();try{
+ user(f,'retry-refresh@example.test');snapshotSignatureResends(f);
+ f.DB.raw.exec("CREATE TRIGGER fail_refresh BEFORE INSERT ON outbox WHEN NEW.kind='welcome-signature' BEGIN SELECT RAISE(ABORT,'TEST_REFRESH_FAILURE'); END");
+ await assert.rejects(queueWelcomeSignatureResends(f.env),/TEST_REFRESH_FAILURE/);assert.equal(refreshCount(f),0);assert.equal(f.DB.raw.prepare('SELECT queued FROM welcome_signature_resends').get().queued,0);
+ f.DB.raw.exec('DROP TRIGGER fail_refresh');await queueWelcomeSignatureResends(f.env);await queueWelcomeSignatureResends(f.env);assert.equal(refreshCount(f),1);
+ const provider=global.fetch,attempts=[];let temporary=true;
+ global.fetch=async(url,options)=>{if(String(url)==='https://api.resend.com/emails'){attempts.push({key:options.headers['Idempotency-Key'],body:options.body});if(temporary)return new Response('',{status:503})}return provider(url,options)};
+ await drain(f.env);assert.equal(f.DB.raw.prepare("SELECT state FROM outbox WHERE kind='welcome-signature'").get().state,'queued');
+ temporary=false;f.DB.raw.exec("UPDATE outbox SET available_at=0 WHERE kind='welcome-signature'");await drain(f.env);assert.deepEqual(attempts[0],attempts[1]);assert.equal(f.emails.length,1);await scheduled(f);assert.equal(f.emails.length,1);
+ }finally{f.close()}});
+
+test('signature refresh is batched and health reports a missing snapshot migration',async()=>{const f=fixture();try{
+ for(let i=0;i<7;i++)user(f,`refresh-batch${i}@example.test`);snapshotSignatureResends(f);
+ await scheduled(f);assert.equal(f.emails.length,5);await scheduled(f);assert.equal(f.emails.length,7);await scheduled(f);assert.equal(f.emails.length,7);
+ f.DB.raw.exec('DROP TABLE welcome_signature_resends');const response=await f.request('/api/health');assert.equal(response.status,503);assert.equal((await response.json()).checks.schema,false);
+ }finally{f.close()}});
