@@ -80,6 +80,9 @@ button:disabled{opacity:1}
 }
 .amain{padding:48px 36px;gap:28px}
 .acard{max-width:420px}
+.auth-name-fields{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px}
+.auth-name-fields .field{min-width:0}
+@media(max-width:480px){.auth-name-fields{grid-template-columns:minmax(0,1fr);gap:0}}
 .acard h2{font-size:30px;line-height:1.25;margin-top:10px}
 .acard>p{font-size:15px;line-height:1.7}
 .asub,.google-btn{min-height:50px;font-size:15px}

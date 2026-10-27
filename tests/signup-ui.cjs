@@ -28,7 +28,9 @@ let root;
  assert.ok(submit().disabled);assert.match(status(),/Complete the check/);
  assert.equal(submit().getAttribute('aria-describedby'),'security-status');
  const form=document.querySelector('form');
- for(const [name,value] of Object.entries({name:'Signup Test',workspace:'My workspace',email:'test@example.com',password:'synthetic test password',passwordConfirm:'synthetic test password'}))form.elements[name].value=value;
+ assert.equal(form.elements.firstName.autocomplete,'given-name');assert.equal(form.elements.lastName.autocomplete,'family-name');assert.equal(form.elements.firstName.required,true);assert.equal(form.elements.lastName.required,true);
+
+ for(const [name,value] of Object.entries({firstName:' Signup ',lastName:' Test ',workspace:'My workspace',email:'test@example.com',password:'synthetic test password',passwordConfirm:'synthetic test password'}))form.elements[name].value=value;
  await act(async()=>form.dispatchEvent(new dom.window.Event('submit',{bubbles:true,cancelable:true})));
  assert.match(document.querySelector('[role=alert]').textContent,/Complete the security check/);
  assert.ok(!requests.some(([url])=>url==='/api/auth/register'),'No signup request before verification');
@@ -45,7 +47,7 @@ let root;
  await act(async()=>oldWidget['expired-callback']());
  assert.ok(submit().disabled);assert.match(status(),/expired/);
  await click(document.querySelector('.challenge-retry'));
- assert.ok(removed.length);assert.equal(form.elements.name.value,'Signup Test');
+ assert.ok(removed.length);assert.equal(form.elements.firstName.value,' Signup ');
  await act(async()=>oldWidget.callback('stale-token'));
  assert.ok(submit().disabled,'A removed widget cannot restore a stale token');
  await act(async()=>widgets.at(-1)['error-callback']());
@@ -62,6 +64,7 @@ let root;
 
  await act(async()=>form.dispatchEvent(new dom.window.Event('submit',{bubbles:true,cancelable:true})));
  const request=requests.find(([url])=>url==='/api/auth/register');
+ assert.equal(JSON.parse(request[1].body).name,'Signup Test');assert.ok(!('firstName' in JSON.parse(request[1].body)));assert.ok(!('lastName' in JSON.parse(request[1].body)));
  assert.ok(!('passwordConfirm' in JSON.parse(request[1].body)),'Confirmation stays in the browser');
  assert.equal(JSON.parse(request[1].body).challenge,'synthetic-token-two');
  assert.match(document.body.textContent,/Check your inbox/);
