@@ -2,7 +2,7 @@ import {query,uid,now,origin} from './core.js';
 const escapeHTML=value=>String(value).replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
 export function welcomeMessage(env,user){
  const first=String(user.name||'').trim().split(/\s+/)[0]||'there',base=origin(env),workspace=base+'/app',support=base+'/support';
- const text=`Hi ${first},\n\nWelcome to Pentreeform. Here’s how to get your first form connected:\n\n1. Create a form in your workspace.\n2. Add its endpoint to your website form.\n3. Send a test message, then check Inbox and Deliveries.\n\nOpen your workspace: ${workspace}\n\nNeed a hand? Visit ${support}\n\nFeranmi\nPentreeform\n\nYou’re receiving this account email because you signed up for Pentreeform.`;
+ const text=`Hi ${first},\n\nWelcome to Pentreeform. Here’s how to get your first form connected:\n\n1. Create a form in your workspace.\n2. Add its endpoint to your website form.\n3. Send a test message, then check Inbox and Deliveries.\n\nOpen your workspace: ${workspace}\n\nNeed a hand? Visit ${support}\n\nBakare Feranmi\nFounder\nPentreeform\n\nYou’re receiving this account email because you signed up for Pentreeform.`;
  const html=`<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light dark"><meta name="supported-color-schemes" content="light dark"><title>Welcome to Pentreeform</title><style>
 @media(max-width:480px){.email-content{padding:28px 22px!important}.email-heading{font-size:28px!important}}
 @media(prefers-color-scheme:dark){.email-background{background:#111111!important}.email-card{background:#171717!important;border-color:#463459!important}.email-copy,.email-heading{color:#f5f5f5!important}.email-muted{color:#c7c7cc!important}.email-link,.email-step{color:#d1baff!important}.email-rule{border-color:#463459!important}}
@@ -20,7 +20,7 @@ export function welcomeMessage(env,user){
 </table>
 <table role="presentation" cellpadding="0" cellspacing="0"><tr><td bgcolor="#6020c8" style="border-radius:9px;background:#6020c8"><a href="${escapeHTML(workspace)}" style="display:inline-block;padding:15px 24px;border:1px solid #6020c8;border-radius:9px;font-size:15px;font-weight:bold;line-height:1.4;text-decoration:none;color:#ffffff">Open your workspace</a></td></tr></table>
 <p class="email-muted" style="margin:28px 0 24px;font-size:15px;line-height:1.7;color:#50505a">Need a hand? <a class="email-link" href="${escapeHTML(support)}" style="color:#6020c8;text-decoration:underline">Visit Support</a>.</p>
-<p class="email-copy" style="margin:0 0 28px;font-size:16px;line-height:1.6">Feranmi<br><span class="email-muted" style="color:#50505a">Pentreeform</span></p>
+<p class="email-copy" style="margin:0 0 28px;font-size:16px;line-height:1.6"><strong>Bakare Feranmi</strong><br><span class="email-muted" style="color:#50505a">Founder<br>Pentreeform</span></p>
 <div class="email-rule" style="border-top:1px solid #e1d6f2;padding-top:20px"><p class="email-muted" style="font-size:12px;line-height:1.7;color:#676770;margin:0">You’re receiving this account email because you signed up for Pentreeform.</p></div>
 </td></tr></table></td></tr></table></body></html>`;
  return {subject:'Welcome to Pentreeform',text,html};
