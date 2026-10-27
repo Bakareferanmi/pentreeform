@@ -43,4 +43,4 @@ Write-Host 'Applying account migrations. Existing account data is preserved.'
 if ($LASTEXITCODE -ne 0) { throw 'Database update failed. Deployment was not started.' }
 & npx wrangler deploy
 if ($LASTEXITCODE -ne 0) { throw 'Deployment failed. Check the output above.' }
-Write-Host 'Pentreeform updated. Automatic welcome emails are enabled for new verified accounts.'
+Write-Host 'Pentreeform updated. Welcome emails are enabled for new accounts and eligible existing verified accounts. The scheduled Worker processes existing accounts automatically.'

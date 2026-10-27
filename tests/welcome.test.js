@@ -3,9 +3,9 @@ import assert from 'node:assert/strict';
 import {DatabaseSync} from 'node:sqlite';
 import {readFileSync} from 'node:fs';
 import {fixture} from './fixture.js';
-import {welcomeMessage,welcomeStatements} from '../worker/welcome.js';
+import {welcomeMessage,welcomeStatements,queueExistingWelcomes} from '../worker/welcome.js';
 import {drain} from '../worker/mail.js';
-import {cleanup} from '../worker/index.js';
+import worker,{cleanup} from '../worker/index.js';
 import {now,uid} from '../worker/core.js';
 const registration={email:'ada@example.test',password:'correct horse battery staple',name:'Ada Okafor',workspace:'Ada Studio',challenge:'valid-auth'};
 async function register(f){const response=await f.request('/api/auth/register',{method:'POST',data:registration});assert.equal(response.status,201);return f.emails[0].text.match(/#verify=([a-f0-9]+)/)[1]}
@@ -53,4 +53,43 @@ test('welcome migration does not backfill old accounts and health detects an una
  db.exec("INSERT INTO users(id,email,name,workspace,password_hash,created_at) VALUES('new','new@example.test','New','New','test',0)");assert.equal(db.prepare("SELECT welcome_email_queued FROM users WHERE id='new'").get().welcome_email_queued,0);
  }finally{db.close()}
  const f=fixture();try{assert.equal((await f.request('/api/health')).status,200);f.DB.raw.exec('ALTER TABLE users DROP COLUMN welcome_email_queued');const response=await f.request('/api/health');assert.equal(response.status,503);assert.equal((await response.json()).checks.schema,false)}finally{f.close()}
+});
+
+async function scheduled(f){const waits=[];await worker.scheduled({},f.env,{waitUntil(promise){waits.push(promise)}});await Promise.all(waits)}
+function existing(f,address,verified=1){const owner=user(f,address);f.DB.raw.prepare('UPDATE users SET verified=?,welcome_email_queued=1,welcome_email_backfill=1 WHERE id=?').run(verified,owner.id);return owner}
+
+test('existing verified accounts receive one welcome without signing in, including after repeated scheduled runs and cleanup',async()=>{const f=fixture();try{
+ const owner=existing(f,'existing@example.test');await scheduled(f);assert.equal(f.emails.length,1);assert.equal(f.emails[0].to[0],owner.email);assert.match(f.emails[0].text,/Hi Ada,/);assert.equal(f.DB.raw.prepare('SELECT welcome_email_backfill FROM users WHERE id=?').get(owner.id).welcome_email_backfill,0);
+ await scheduled(f);assert.equal(f.emails.length,1);assert.equal(count(f),1);
+ f.DB.raw.prepare("UPDATE outbox SET created_at=? WHERE kind='welcome'").run(now()-31*86400);await cleanup(f.env);assert.equal(count(f),0);await scheduled(f);assert.equal(f.emails.length,1,'Cleanup cannot recreate an existing-account welcome');
+ }finally{f.close()}});
+
+test('existing-account sends process small batches and preserve verification and suppression checks',async()=>{const f=fixture();try{
+ for(let i=0;i<7;i++)existing(f,`batch${i}@example.test`);
+ const unverified=existing(f,'not-verified@example.test',0),suppressed=existing(f,'suppressed@example.test');f.DB.raw.prepare("INSERT INTO suppressions(email,reason,created_at) VALUES(?,'complained',?)").run(suppressed.email,now());
+ await scheduled(f);assert.equal(f.emails.length,5);await scheduled(f);assert.equal(f.emails.length,7);await scheduled(f);assert.equal(f.emails.length,7);assert.ok(!f.emails.some(email=>[unverified.email,suppressed.email].includes(email.to[0])));
+ }finally{f.close()}});
+
+test('existing unverified accounts receive their welcome when they later verify',async()=>{const f=fixture();try{
+ const token=await register(f);f.DB.raw.prepare('UPDATE users SET welcome_email_queued=1,welcome_email_backfill=1').run();await scheduled(f);assert.equal(count(f),0);
+ assert.equal((await verify(f,token)).status,200);assert.equal(count(f),1);await scheduled(f);assert.equal(f.emails.filter(email=>email.subject==='Welcome to Pentreeform').length,1);assert.equal(f.DB.raw.prepare('SELECT welcome_email_backfill FROM users').get().welcome_email_backfill,0);
+ }finally{f.close()}});
+
+test('existing-account claims are atomic and skip any welcome already queued after the snapshot',async()=>{const f=fixture();try{
+ const owner=existing(f,'retry-existing@example.test');f.DB.raw.exec("CREATE TRIGGER fail_existing_welcome BEFORE INSERT ON outbox WHEN NEW.kind='welcome' BEGIN SELECT RAISE(ABORT,'TEST_BACKFILL_FAILURE'); END");
+ await assert.rejects(queueExistingWelcomes(f.env),/TEST_BACKFILL_FAILURE/);assert.equal(count(f),0);assert.equal(f.DB.raw.prepare('SELECT welcome_email_backfill FROM users').get().welcome_email_backfill,1);
+ f.DB.raw.exec('DROP TRIGGER fail_existing_welcome');await queueExistingWelcomes(f.env);assert.equal(count(f),1);
+ f.DB.raw.prepare('UPDATE users SET welcome_email_backfill=1 WHERE id=?').run(owner.id);await queueExistingWelcomes(f.env);assert.equal(count(f),1);assert.equal(f.DB.raw.prepare('SELECT welcome_email_backfill FROM users').get().welcome_email_backfill,0);await scheduled(f);assert.equal(f.emails.length,1);
+ }finally{f.close()}});
+
+test('existing-account migration includes excluded users and excludes every previously attempted welcome',()=>{
+ const db=new DatabaseSync(':memory:');try{
+ for(const file of ['0001_initial.sql','0002_google_auth.sql','0003_usage_alerts.sql','0004_hosted_verification.sql','0005_google_account_linking.sql'])db.exec(readFileSync(new URL('../migrations/'+file,import.meta.url),'utf8'));
+ const insert=id=>db.prepare("INSERT INTO users(id,email,name,workspace,password_hash,created_at) VALUES(?,?,'Old account','Workspace','test',0)").run(id,id+'@example.test');
+ insert('excluded');insert('unverified');db.exec(readFileSync(new URL('../migrations/0006_welcome_email.sql',import.meta.url),'utf8'));
+ for(const state of ['queued','sending','accepted','delivered','failed','bounced','complained','suppressed','cancelled']){insert(state);db.prepare('UPDATE users SET welcome_email_queued=1 WHERE id=?').run(state);db.prepare("INSERT INTO outbox(id,user_id,recipient,payload,kind,state,available_at,created_at) VALUES(?,?,?,'{}','welcome',?,0,0)").run('job-'+state,state,state+'@example.test',state)}
+ db.exec(readFileSync(new URL('../migrations/0007_existing_account_welcome.sql',import.meta.url),'utf8'));
+ assert.deepEqual(db.prepare('SELECT id FROM users WHERE welcome_email_backfill=1 ORDER BY id').all().map(row=>row.id),['excluded','unverified']);
+ insert('new');assert.deepEqual({...db.prepare("SELECT welcome_email_queued,welcome_email_backfill FROM users WHERE id='new'").get()},{welcome_email_queued:0,welcome_email_backfill:0});
+ }finally{db.close()}
 });

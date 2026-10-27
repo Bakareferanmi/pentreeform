@@ -29,7 +29,16 @@ export function welcomeStatements(env,user){
  const payload=JSON.stringify(welcomeMessage(env,user)),stamp=now();
  return [
   query(env,`INSERT INTO outbox(id,user_id,recipient,payload,kind,available_at,created_at)
-   SELECT ?,id,email,?,'welcome',?,? FROM users WHERE id=? AND verified=1 AND welcome_email_queued=0`,uid(),payload,stamp,stamp,user.id),
-  query(env,'UPDATE users SET welcome_email_queued=1 WHERE id=? AND verified=1 AND welcome_email_queued=0',user.id)
+   SELECT ?,id,email,?,'welcome',?,? FROM users WHERE id=? AND verified=1 AND (welcome_email_queued=0 OR welcome_email_backfill=1)
+   AND NOT EXISTS(SELECT 1 FROM outbox WHERE user_id=users.id AND kind='welcome')`,uid(),payload,stamp,stamp,user.id),
+  query(env,'UPDATE users SET welcome_email_queued=1,welcome_email_backfill=0 WHERE id=? AND verified=1 AND (welcome_email_queued=0 OR welcome_email_backfill=1)',user.id)
  ];
+}
+
+export async function queueExistingWelcomes(env,limit=5){
+ const {results:users}=await query(env,`SELECT id,name,email FROM users WHERE verified=1 AND welcome_email_backfill=1
+  AND NOT EXISTS(SELECT 1 FROM suppressions WHERE suppressions.email=users.email)
+  ORDER BY created_at,id LIMIT ?`,limit).all();
+ if(!users.length)return;
+ await env.DB.batch(users.flatMap(user=>welcomeStatements(env,user)));
 }
