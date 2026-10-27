@@ -38,15 +38,34 @@ The webhook uses signed payloads and a five-minute timestamp tolerance. Events a
 
 ## 3. Configure Turnstile
 
-Create a Cloudflare Turnstile widget. Add the application's hostname for sign-up/reset verification. Add each customer website's exact hostname before enabling its form. Set `TURNSTILE_SITE_KEY` in `wrangler.jsonc`.
+Create one Cloudflare Turnstile widget for the Pentreeform application hostname.
+Set `TURNSTILE_SITE_KEY` in `wrangler.jsonc` and keep the secret key in Worker secrets.
+Customer websites do not need a Cloudflare account, site key, or hostname entry.
+New forms use a verification page hosted on the application's own origin.
 
-```sh
-npx wrangler secret put TURNSTILE_SECRET_KEY
-```
+Authentication uses action `auth`. Submission verification uses action `submission`
+and binds Cloudflare's `cdata` to a random, expiring verification ticket. Tokens
+are verified server-side against the application hostname. Existing customers who
+already installed their own direct widget remain supported with their original
+hostname validation.
 
-Authentication uses action `auth`; website form submissions use action `submission`. The backend checks the action and hostname. Your customers must use the HTML snippet in Documentation, including the widget.
+Apply migration `0004_hosted_verification.sql` **before deploying this Worker**.
+It adds an expiring queue for messages awaiting verification. Pending fields use
+AES-GCM with a domain-separated key derived from the existing Turnstile secret.
+No new credential is needed. Rotating that secret invalidates pending tickets.
+Pending fields expire after ten minutes, are cleaned by the scheduled job, and
+are erased immediately after successful verification. They never enter the inbox,
+consume a submission allowance or queue an email until verification succeeds.
 
-This beta uses an operator-managed widget and does not automate customer hostname provisioning. Turnstile hostname allowances depend on your account; verify them before offering broad self-service registration. If those allowances are too small, add per-customer widget support or a hosted challenge flow before scaling. Do not bypass server-side verification to work around this.
+Normal HTML forms only need `action`, `method="POST"`, and named fields. They
+redirect to Pentreeform for the brief verification and then show confirmation.
+JSON clients must handle HTTP 202 with `verification_required: true`; that is not
+a saved message. Open `verification_url`, or embed it with `?mode=embed`. An embed
+posts `{type: 'pentreeform:verified', ticket, id}` only after the message is saved.
+Check the event origin against the endpoint origin, the event source against the
+iframe window, and the ticket against the URL. A closing window or timeout is not
+success. Root and `www` versions of the registered website are both accepted;
+unrelated subdomains, non-HTTPS origins and arbitrary redirects remain blocked.
 
 ## 4. Create the schema and deploy
 
@@ -67,8 +86,8 @@ Set `REGISTRATION_OPEN` to `true` and redeploy only once email, Turnstile, and d
 Test with an address you control:
 
 1. Register, open the email verification link, sign in, then sign out and sign in again.
-2. Create a form for your test site's exact HTTPS hostname. Test naked/www variants separately; hostnames are matched exactly.
-3. Add the form endpoint and Turnstile snippet to that website. Submit a message with a unique identifier.
+2. Create a form for your test site's exact HTTPS hostname. Test naked/www variants; both are accepted for the registered website.
+3. Add the form endpoint to that website. No customer-side widget or security keys are required. Submit a message with a unique identifier.
 4. Confirm the stored message and custom fields appear in the inbox before relying on email. Confirm the email arrives. Reply should target the submitter.
 5. Confirm the signed delivery event changes `accepted` to `delivered`. Check spam/junk and the provider logs if the message is missing.
 6. Confirm a second account cannot read, modify, delete, or export the first account's messages.

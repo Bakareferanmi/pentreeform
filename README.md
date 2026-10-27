@@ -75,7 +75,7 @@ Optional browser checks: start Vite on port 5173, install Chromium with `npx pla
 - The workspace requires sign-in, keeps its session in a cookie, and loads account data from D1. There is no public demo workspace or local sample-data fallback.
 - The inbox initially loads 100 messages. Search, filters, and summary counts cover loaded messages; load older pages as needed. CSV export streams all retained matching records from the server.
 - Notifications go only to the verified account email. Additional recipient verification and team accounts are not included yet.
-- Domain checks are defense in depth; Turnstile is mandatory on public submissions. Customer website hostnames must also be permitted in the operator's Turnstile configuration. This beta does not provision Turnstile domains automatically.
+- Pentreeform handles Turnstile on its own origin. Customers only configure their form endpoint. Unverified messages expire after ten minutes and are not saved to the inbox or emailed. Apply migration 0004 before deploying the updated Worker. Existing direct-widget integrations remain supported.
 - Email acceptance, delivery to the recipient server, and inbox placement are different. Only a signed delivery event marks a notification delivered.
 - Accepted messages are not automatically resent if a callback is missing. Provider retries are bounded to five attempts and the idempotency window.
 - Archiving stops submissions but keeps historical messages. Deleting a submission removes its outbox record. Deletion cannot recall a message already sent or in flight.
