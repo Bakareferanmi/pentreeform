@@ -64,6 +64,12 @@ button:disabled{opacity:1}
 .story{padding:48px;gap:36px}
 .story h1{font-size:clamp(32px,3.5vw,48px);line-height:1.15}
 .story p{line-height:1.75}
+.auth .story-copy{text-align:center;width:100%;max-width:440px;margin-inline:auto}
+.auth .story-copy p{margin-inline:auto}
+@media(min-width:961px){
+ .auth .story{justify-content:center;align-items:center;padding-block:144px}
+ .auth .story>.logo{position:absolute;top:48px;left:48px}
+}
 .amain{padding:48px 36px;gap:28px}
 .acard{max-width:420px}
 .acard h2{font-size:30px;line-height:1.25;margin-top:10px}
