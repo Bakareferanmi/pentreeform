@@ -1,4 +1,5 @@
 import {createRemoteJWKSet,jwtVerify} from 'jose';
+import {welcomeStatements} from './welcome.js';
 import {query,now,uid,token,hash,origin,readJSON,rate,fail,json,email,text,safeEqual,session,fetchProvider,passwordOK} from './core.js';
 const googleKeys=createRemoteJWKSet(new URL('https://www.googleapis.com/oauth2/v3/certs'),{timeoutDuration:10000,cacheMaxAge:600000});
 export const googleConfigured=env=>!!env.GOOGLE_CLIENT_ID&&!!env.GOOGLE_CLIENT_SECRET;
@@ -93,6 +94,7 @@ export async function googleRoute(req,env,path,verificationStatements){
  user={id:uid(),email:address,name:text(claims.name,80)||address.split('@')[0],workspace:'My workspace',verified:authoritative?1:0,plan:'Free',paid_until:0};
  const statements=[query(env,'INSERT INTO users(id,email,name,workspace,password_hash,verified,created_at) VALUES(?,?,?,?,?,?,?)',user.id,user.email,user.name,user.workspace,'!google',user.verified,now()),query(env,'INSERT INTO google_identities(subject,user_id,created_at) VALUES(?,?,?)',claims.sub,user.id,now())];
  if(!authoritative)statements.push(...await verificationStatements(env,user,'verify'));
+ else statements.push(...welcomeStatements(env,user));
  await env.DB.batch(statements);
  }
  const signed=await session(user,req,env);return redirect(env,null,signed.headers.get('set-cookie'));

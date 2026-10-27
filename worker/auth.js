@@ -1,5 +1,6 @@
 import {query,now,uid,token,hash,email,text,passwordHash,passwordOK,readJSON,fail,json,rate,publicUser,session,account,origin,cookie,fetchProvider} from './core.js';
 import {job} from './mail.js';
+import {welcomeStatements} from './welcome.js';
 import {googleRoute} from './google.js';
 export async function challenge(req,env,value,expectedAction){
  const secret=typeof env.TURNSTILE_SECRET_KEY==='string'?env.TURNSTILE_SECRET_KEY.trim():'';
@@ -58,10 +59,10 @@ export async function authRoute(req,env,path){
  }
  if(path==='/api/auth/verify'||path==='/api/auth/reset'){
  const kind=path.endsWith('verify')?'verify':'reset';if(!/^[a-f0-9]{64}$/.test(data.token||''))fail(400,'Invalid or expired link.');const digest=await hash(data.token);
- const t=await query(env,'SELECT user_id FROM auth_tokens WHERE token_hash=? AND kind=? AND expires_at>?',digest,kind,now()).first();if(!t)fail(400,'Invalid or expired link.');
+ const t=await query(env,'SELECT t.user_id,u.name,u.email FROM auth_tokens t JOIN users u ON u.id=t.user_id WHERE t.token_hash=? AND t.kind=? AND t.expires_at>?',digest,kind,now()).first();if(!t)fail(400,'Invalid or expired link.');
  const condition='id=(SELECT user_id FROM auth_tokens WHERE token_hash=? AND kind=? AND expires_at>?)';
  const update=kind==='verify'?query(env,`UPDATE users SET verified=1 WHERE ${condition}`,digest,kind,now()):query(env,`UPDATE users SET password_hash=? WHERE ${condition}`,await passwordHash(data.password),digest,kind,now());
- const results=await env.DB.batch([update,query(env,'DELETE FROM auth_tokens WHERE token_hash=?',digest)]);if(!results[0].meta.changes)fail(400,'This link has already been used.');
+ const results=await env.DB.batch([update,...(kind==='verify'?welcomeStatements(env,{id:t.user_id,name:t.name,email:t.email}):[]),query(env,'DELETE FROM auth_tokens WHERE token_hash=?',digest)]);if(!results[0].meta.changes)fail(400,'This link has already been used.');
  if(kind==='reset')await env.DB.batch([query(env,'DELETE FROM sessions WHERE user_id=?',t.user_id),query(env,'DELETE FROM google_link_requests WHERE user_id=?',t.user_id)]);return json({message:kind==='verify'?'Email verified. You can now sign in.':'Password updated. Please sign in again.'});
  }
  fail(404,'Not found.');

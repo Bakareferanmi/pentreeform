@@ -4,7 +4,7 @@ const tables=['users','sessions','auth_tokens','forms','submissions','monthly_us
 export async function health(env){
  let database=false,schema=false,applicationOrigin=null;
  try{applicationOrigin=origin(env)}catch{}
- if(env.DB)try{const result=await query(env,"SELECT name FROM sqlite_master WHERE type='table' AND name IN ("+tables.map(()=>'?').join(',')+")",...tables).all();database=true;schema=tables.every(name=>result.results.some(row=>row.name===name))}catch{}
+ if(env.DB)try{const result=await query(env,"SELECT name FROM sqlite_master WHERE type='table' AND name IN ("+tables.map(()=>'?').join(',')+")",...tables).all();database=true;schema=tables.every(name=>result.results.some(row=>row.name===name));if(schema)await query(env,'SELECT welcome_email_queued FROM users LIMIT 0').all()}catch{schema=false}
  const ready=database&&schema&&!!applicationOrigin;
  return json({service:'pentreeform',status:ready?'ok':'setup_required',applicationOrigin,checks:{database,schema,origin:!!applicationOrigin},configured:{email:!!env.RESEND_API_KEY&&!!env.EMAIL_FROM&&!env.EMAIL_FROM.includes('YOUR-'),emailWebhooks:!!env.RESEND_WEBHOOK_SECRET,turnstile:!!env.TURNSTILE_SITE_KEY&&!!env.TURNSTILE_SECRET_KEY,google:googleConfigured(env),billing:!!env.PAYSTACK_SECRET_KEY&&['STARTER','PRO','AGENCY'].every(plan=>!!env['PAYSTACK_PLAN_'+plan])}},ready?200:503);
 }

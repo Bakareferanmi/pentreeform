@@ -183,3 +183,13 @@ npm run check:deployment -- https://pentreeform.vercel.app
 ```
 
 The checker verifies JSON responses from `/api/health` and `/api/config`, and a protected unauthenticated `/api/auth/me`. It rejects a static HTML response even when its HTTP status is 200. Health reports database/schema readiness and configuration flags; it cannot prove email delivery, Google account approval or successful payments.
+
+## Automatic welcome email
+
+Apply migration `0006_welcome_email.sql` before deploying this Worker. Email/password accounts receive one welcome email after email verification; new Google accounts receive it when verified by Google or after local verification. The message includes a first-name greeting, the Pentreeform logo, a three-step setup checklist, and links to the workspace and Support. Both HTML and plain-text versions use the existing Resend sender.
+
+The welcome claim is committed with account activation. Existing accounts are excluded on rollout, repeat sign-ins do not resend it, and deleting old outbox entries cannot create another welcome. Sending uses the existing durable outbox, retry rules, provider idempotency key, bounce suppression, and signed delivery events. A welcome is cancelled if its recipient is no longer the verified account email.
+
+This is a one-time account onboarding message. It does not subscribe users to a marketing campaign or send retroactive messages. Template copy lives in `worker/welcome.js`; no additional provider account or API key is needed.
+
+On Windows, `scripts/update-welcome-email.ps1 -Revision <commit-sha>` refreshes the complete source (including shared modules), installs locked dependencies, builds, applies database migrations, and deploys. It preserves `wrangler.jsonc`, Vercel settings, local environment files, and Worker secrets. The logo is served at `/email-logo.png` on the canonical frontend.

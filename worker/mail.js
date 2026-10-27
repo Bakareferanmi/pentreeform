@@ -13,6 +13,10 @@ export async function drain(env,limit=10){
  const claim=await query(env,`UPDATE outbox SET state='sending',lease_until=?,attempts=attempts+1 WHERE id=? AND (state='queued' OR (state='sending' AND lease_until<?)) RETURNING id`,now()+120,j.id,now()).first();if(!claim)continue;
  try{
  const suppressed=await query(env,'SELECT email FROM suppressions WHERE email=?',j.recipient).first();if(suppressed){await query(env,"UPDATE outbox SET state='suppressed',payload='',error='Recipient suppressed after a bounce or complaint' WHERE id=?",j.id).run();continue}
+ if(j.kind==='welcome'){
+ const recipient=await query(env,'SELECT email,verified FROM users WHERE id=?',j.user_id).first();
+ if(!recipient?.verified||recipient.email!==j.recipient){await query(env,"UPDATE outbox SET state='cancelled',payload='',lease_until=0,error='Welcome recipient is no longer verified' WHERE id=?",j.id).run();continue}
+ }
  if(/^usage-(80|95)$/.test(j.kind)){
  const alert=await query(env,'SELECT a.month,a.quota,a.threshold,u.plan,u.paid_until,u.email,u.verified,m.count FROM usage_alerts a JOIN users u ON u.id=a.user_id LEFT JOIN monthly_usage m ON m.user_id=a.user_id AND m.month=a.month WHERE a.outbox_id=?',j.id).first();
  const current=alert&&alert.verified&&alert.email===j.recipient&&alert.month===new Date().toISOString().slice(0,7)&&PLANS[effectivePlan(alert)].limit===alert.quota&&alert.count>=Math.ceil(alert.quota*alert.threshold/100)&&(alert.threshold===95||alert.count<Math.ceil(alert.quota*.95));
