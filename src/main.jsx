@@ -1,7 +1,8 @@
 import React from 'react';
-import {createRoot} from 'react-dom/client';
+import {createRoot,hydrateRoot} from 'react-dom/client';
 import LiveRoot from './LiveRoot.jsx';
 import {initTheme} from './theme.js';
+import {pageAt} from '../shared/seo.js';
 import './styles.css';
 import './support.css';
 import './landing.css';
@@ -9,4 +10,6 @@ import './theme.css';
 import './polish.css';
 import './surfaces.css';
 initTheme();
-createRoot(document.getElementById('root')).render(<React.StrictMode><LiveRoot/></React.StrictMode>);
+const root=document.getElementById('root'),app=<React.StrictMode><LiveRoot/></React.StrictMode>;
+if(root.dataset.prerendered==='true'&&root.dataset.page===pageAt(window.location))hydrateRoot(root,app);
+else createRoot(root).render(app);

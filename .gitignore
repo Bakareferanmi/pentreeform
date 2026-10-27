@@ -1,5 +1,6 @@
 node_modules/
 dist/
+.seo-build-*/
 .env*
 !.env.example
 

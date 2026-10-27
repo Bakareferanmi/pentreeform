@@ -6,11 +6,11 @@ import {SetupGuide,LandingFAQ} from './LandingSections.jsx';
 import PublicFooter from './PublicFooter.jsx';
 
 export default function Landing(){
- const [activeMessage,setActiveMessage]=useState(null),[manualSent,setManualSent]=useState(false),[menu,setMenu]=useState(false),[step,setStep]=useState(0),[motion,setMotion]=useState(()=>!window.matchMedia?.('(prefers-reduced-motion:reduce)').matches),[interacted,setInteracted]=useState(false),[manualStage,setManualStage]=useState('form');
+ const [activeMessage,setActiveMessage]=useState(null),[manualSent,setManualSent]=useState(false),[menu,setMenu]=useState(false),[step,setStep]=useState(0),[motion,setMotion]=useState(false),[interacted,setInteracted]=useState(false),[manualStage,setManualStage]=useState('form');
  const sample={initials:'YO',name:'You',subject:'Let’s work together.',form:'Contact form',time:'Just now',message:'I have a project in mind. Can we talk?'};
  const autoplay=motion&&!interacted,sent=manualSent||(autoplay&&step>=1),selected=activeMessage||(autoplay&&step===2?sample:null),stage=autoplay?(step===0?'form':step===3?'email':'inbox'):manualStage,notified=stage==='email';
  useEffect(()=>{if(!autoplay)return;const timer=setInterval(()=>{if(!document.hidden)setStep(v=>(v+1)%4)},2600);return()=>clearInterval(timer)},[autoplay]);
- useEffect(()=>{const query=window.matchMedia?.('(prefers-reduced-motion:reduce)');if(!query)return;const changed=()=>{if(query.matches){setMotion(false);setStep(0)}};query.addEventListener?.('change',changed);return()=>query.removeEventListener?.('change',changed)},[]);
+ useEffect(()=>{const query=window.matchMedia?.('(prefers-reduced-motion:reduce)');setMotion(!query?.matches);if(!query)return;const changed=()=>{if(query.matches){setMotion(false);setStep(0)}};query.addEventListener?.('change',changed);return()=>query.removeEventListener?.('change',changed)},[]);
  function stop(){setManualStage(stage);setInteracted(true);setMotion(false);setManualSent(sent);setActiveMessage(selected)}
  function open(message){stop();setManualStage('inbox');setActiveMessage(message)}
  function showStage(value){stop();setManualStage(value);setManualSent(value!=='form');setActiveMessage(value==='inbox'?sample:null)}

@@ -15,7 +15,8 @@ test('deployment configuration preserves registration choices and sender while s
   assert.equal(result.worker.vars.EMAIL_FROM,input.vars.EMAIL_FROM);
   assert.ok(result.frontend.rewrites.find(r=>r.source==='/app'));
   assert.deepEqual(result.frontend.rewrites.slice(0,2).map(r=>r.destination),[options.workerOrigin+'/api/:path*',options.workerOrigin+'/f/:path*']);
-  assert.ok(result.frontend.headers.every(r=>r.headers[0].value==='no-store'));
+  assert.ok(result.frontend.headers.filter(r=>['/api/:path*','/f/:path*'].includes(r.source)).every(r=>r.headers.some(h=>h.key==='Cache-Control'&&h.value==='no-store')));
+  assert.ok(result.frontend.headers.find(r=>r.source==='/app').headers.some(h=>h.key==='X-Robots-Tag'&&h.value==='noindex, nofollow'));
   assert.notEqual(input.d1_databases[0].database_id,options.databaseId);
   assert.deepEqual(configureDeployment(result.worker,result.frontend,options),result);
  }

@@ -199,3 +199,13 @@ On Windows, `scripts/update-welcome-email.ps1 -Revision <commit-sha>` refreshes 
 Migration `0008_welcome_signature_resend.sql` snapshots existing verified accounts for one additional welcome email signed Bakare Feranmi / Founder / Pentreeform. This is an explicitly requested resend, including accounts that already received the original email. New accounts created after this migration continue to receive only their normal welcome.
 
 The scheduled Worker queues up to five snapshot recipients per minute, skips suppressed or unverified addresses, and waits while an original welcome is still queued or sending. Each refresh has its own outbox job and provider idempotency key. Its durable claim remains in `welcome_signature_resends` after outbox cleanup, so repeated deployments or cron runs cannot trigger another refresh. Current verified email ownership is checked again before sending. Apply all migrations before deploying the updated Worker, using the pinned welcome updater.
+
+## Search and sharing metadata
+
+`npm run build` first builds the Vite client, then prerenders the landing, Support, Privacy and Terms pages from the same React components. Each public URL has initial HTML content, its own title and description, an absolute canonical URL, Open Graph and X card tags, and appropriate JSON-LD. The client hydrates the public HTML while the signed-in app remains client-rendered. Lazy workspace loading is retained.
+
+The canonical public origin comes from `vars.APP_ORIGIN` in `wrangler.jsonc`; the deployment configuration helper remains the way to change it. It is compiled into client metadata and used for static page tags, generated `robots.txt` and `sitemap.xml`. The sitemap includes only public pages. Account routes, legacy app routes and submission/API endpoints have `X-Robots-Tag: noindex, nofollow` on Vercel; app HTML also includes noindex. These are indexing hints and do not replace authentication.
+
+`public/og-image.png` is a 1200×630 PNG containing only the approved logo on white. PNG logo, touch icon and 48px favicon variants accompany the original SVG favicon. Sharing URLs are absolute and never include sign-in, verification or reset tokens. No ratings, testimonials or unverified usage claims are added to structured data.
+
+Vercel publishes these frontend changes through the existing Git deployment. A later Worker deployment includes the same generated static assets; no database migration or new secret is required for SEO. Run `npm run build` then `npm run test:seo` to validate the actual generated HTML and image dimensions. Once live, submit `/sitemap.xml` in Google Search Console. Search and social platforms may keep cached titles or images until they crawl again.

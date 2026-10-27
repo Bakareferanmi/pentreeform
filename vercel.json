@@ -10,43 +10,43 @@
     },
     {
       "source": "/demo",
-      "destination": "/index.html"
+      "destination": "/app/index.html"
     },
     {
       "source": "/demo/",
-      "destination": "/index.html"
+      "destination": "/app/index.html"
     },
     {
       "source": "/app",
-      "destination": "/index.html"
+      "destination": "/app/index.html"
     },
     {
       "source": "/app/",
-      "destination": "/index.html"
+      "destination": "/app/index.html"
     },
     {
       "source": "/privacy",
-      "destination": "/index.html"
+      "destination": "/privacy/index.html"
     },
     {
       "source": "/privacy/",
-      "destination": "/index.html"
+      "destination": "/privacy/index.html"
     },
     {
       "source": "/terms",
-      "destination": "/index.html"
+      "destination": "/terms/index.html"
     },
     {
       "source": "/terms/",
-      "destination": "/index.html"
+      "destination": "/terms/index.html"
     },
     {
       "source": "/support",
-      "destination": "/index.html"
+      "destination": "/support/index.html"
     },
     {
       "source": "/support/",
-      "destination": "/index.html"
+      "destination": "/support/index.html"
     }
   ],
   "headers": [
@@ -56,6 +56,10 @@
         {
           "key": "Cache-Control",
           "value": "no-store"
+        },
+        {
+          "key": "X-Robots-Tag",
+          "value": "noindex, nofollow"
         }
       ]
     },
@@ -65,8 +69,66 @@
         {
           "key": "Cache-Control",
           "value": "no-store"
+        },
+        {
+          "key": "X-Robots-Tag",
+          "value": "noindex, nofollow"
         }
       ]
+    },
+    {
+      "source": "/app",
+      "headers": [
+        {
+          "key": "X-Robots-Tag",
+          "value": "noindex, nofollow"
+        }
+      ]
+    },
+    {
+      "source": "/app/",
+      "headers": [
+        {
+          "key": "X-Robots-Tag",
+          "value": "noindex, nofollow"
+        }
+      ]
+    },
+    {
+      "source": "/demo",
+      "headers": [
+        {
+          "key": "X-Robots-Tag",
+          "value": "noindex, nofollow"
+        }
+      ]
+    },
+    {
+      "source": "/demo/",
+      "headers": [
+        {
+          "key": "X-Robots-Tag",
+          "value": "noindex, nofollow"
+        }
+      ]
+    }
+  ],
+  "trailingSlash": false,
+  "redirects": [
+    {
+      "source": "/index.html",
+      "destination": "/",
+      "permanent": true
+    },
+    {
+      "source": "/:page(privacy|terms|support|app)/index.html",
+      "destination": "/:page",
+      "permanent": true
+    },
+    {
+      "source": "/demo",
+      "destination": "/app",
+      "permanent": true
     }
   ]
 }

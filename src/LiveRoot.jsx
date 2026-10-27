@@ -1,6 +1,7 @@
 import React,{lazy,Suspense,Component,useState,useEffect,useRef,useCallback} from 'react';
 import ThemeToggle from './ThemeToggle.jsx';
 import {publicPageAt,isLegacyWorkspaceLocation,isLandingLocation} from './routes.js';
+import {applyMetadata,pageAt} from '../shared/seo.js';
 export {isLandingLocation} from './routes.js';
 const loadWorkspace=()=>import('./App.jsx');
 const App=lazy(loadWorkspace);
@@ -54,10 +55,12 @@ class RouteBoundary extends Component{
 }
 function RouteContent(){
  const [location]=useState(()=>new URL(window.location.href));
+ useEffect(()=>{applyMetadata(document,location)},[location]);
  useEffect(()=>{if(isLegacyWorkspaceLocation(location))history.replaceState({},'','/app')},[location]);
  const publicPage=publicPageAt(location.pathname);
  if(publicPage)return <PublicPage page={publicPage}/>;
  if(isLandingLocation(location))return <Landing/>;
+ if(pageAt(location)==='not-found')return <WorkspaceState><h1>Page not found.</h1><p>Let’s get you back to Pentreeform.</p><a className="btn" href="/">Back to home</a></WorkspaceState>;
  return <WorkspaceRoot/>;
 }
 export default function LiveRoot(){return <RouteBoundary><Suspense fallback={<LoadingScreen/>}><RouteContent/></Suspense></RouteBoundary>}
