@@ -6,22 +6,24 @@ const descriptions={
  support:'Get help connecting website forms to Pentreeform, checking submission delivery, and managing your account.',
  privacy:'Read how Pentreeform collects, stores and protects account information and website form submissions.',
  terms:'Read the terms for using Pentreeform, including accounts, form submissions, service limits and acceptable use.',
+ admin:'Owner dashboard for Pentreeform account reports and product analytics.',
  app:'Sign in to your Pentreeform workspace to manage forms, submissions and email notifications.',
  'not-found':'This page could not be found. Return to Pentreeform to connect your website forms.'
 };
-const titles={home:'Pentreeform · Form backend for HTML and React',support:'Support · Pentreeform',privacy:'Privacy policy · Pentreeform',terms:'Terms of service · Pentreeform',app:'Sign in · Pentreeform','not-found':'Page not found · Pentreeform'};
+const titles={home:'Pentreeform · Form backend for HTML and React',support:'Support · Pentreeform',privacy:'Privacy policy · Pentreeform',terms:'Terms of service · Pentreeform',admin:'Admin · Pentreeform',app:'Sign in · Pentreeform','not-found':'Page not found · Pentreeform'};
 export function pageAt(location){
  const page=publicPageAt(location.pathname);if(page)return page;
+ if(/^\/admin\/?$/.test(location.pathname))return 'admin';
  if(isLandingLocation(location))return 'home';
  if(/^\/app\/?$/.test(location.pathname)||location.pathname==='/'||isLegacyWorkspaceLocation(location))return 'app';
  return 'not-found';
 }
 export function metadata(page,base=SITE_ORIGIN){
  const path=page==='home'?'/':page==='not-found'?null:'/'+page;
- return {page,title:titles[page],description:descriptions[page],url:path?base+path:null,image:base+'/og-image.png',robots:['app','not-found'].includes(page)?'noindex, follow':'index, follow, max-image-preview:large'};
+ return {page,title:titles[page],description:descriptions[page],url:path?base+path:null,image:base+'/og-image.png',robots:['app','admin','not-found'].includes(page)?'noindex, follow':'index, follow, max-image-preview:large'};
 }
 export function structuredData(page,base=SITE_ORIGIN){
- if(['app','not-found'].includes(page))return null;
+ if(['app','admin','not-found'].includes(page))return null;
  const organization={'@type':'Organization','@id':base+'/#organization',name:'Pentreeform',url:base+'/',logo:{'@type':'ImageObject',url:base+'/logo.png',width:512,height:512},sameAs:['https://github.com/Bakareferanmi/pentreeform']};
  const website={'@type':'WebSite','@id':base+'/#website',name:'Pentreeform',url:base+'/',publisher:{'@id':base+'/#organization'}};
  const info=metadata(page,base),webpage={'@type':'WebPage','@id':info.url+'#webpage',url:info.url,name:info.title,description:info.description,isPartOf:{'@id':base+'/#website'}};

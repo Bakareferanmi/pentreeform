@@ -23,12 +23,12 @@ test('public HTML includes real content, unique metadata and canonical social UR
 });
 
 test('account and missing pages are excluded from indexing; sitemap contains only canonical public pages',()=>{
- for(const path of ['app/index.html','404.html']){const dom=built(path),doc=dom.window.document;assert.match(doc.querySelector('meta[name="robots"]').content,/noindex/);assert.equal(doc.getElementById('site-schema'),null);assert.equal(doc.querySelector('#root[data-prerendered]'),null);dom.window.close()}
+ for(const path of ['app/index.html','admin/index.html','404.html']){const dom=built(path),doc=dom.window.document;assert.match(doc.querySelector('meta[name="robots"]').content,/noindex/);assert.equal(doc.getElementById('site-schema'),null);assert.equal(doc.querySelector('#root[data-prerendered]'),null);dom.window.close()}
  const sitemap=new JSDOM(readFileSync(new URL('../dist/sitemap.xml',import.meta.url),'utf8'),{contentType:'text/xml'});assert.deepEqual([...sitemap.window.document.querySelectorAll('loc')].map(el=>el.textContent),PUBLIC_ROUTES.map(path=>SITE_ORIGIN+path));sitemap.window.close();
  const robots=readFileSync(new URL('../dist/robots.txt',import.meta.url),'utf8');assert.match(robots,/Allow: \//);assert.ok(robots.includes('Sitemap: '+SITE_ORIGIN+'/sitemap.xml'));assert.doesNotMatch(robots,/Disallow:\s*\/app/);
  const config=JSON.parse(readFileSync(new URL('../vercel.json',import.meta.url),'utf8'));
- for(const route of ['/app','/app/','/demo','/demo/','/api/:path*','/f/:path*'])assert.ok(config.headers.find(h=>h.source===route).headers.some(h=>h.key==='X-Robots-Tag'&&h.value.includes('noindex')));
- for(const page of ['privacy','terms','support','app'])assert.equal(config.rewrites.find(r=>r.source==='/'+page).destination,'/'+page+'/index.html');
+ for(const route of ['/admin','/admin/','/app','/app/','/demo','/demo/','/api/:path*','/f/:path*'])assert.ok(config.headers.find(h=>h.source===route).headers.some(h=>h.key==='X-Robots-Tag'&&h.value.includes('noindex')));
+ for(const page of ['privacy','terms','support','app','admin'])assert.equal(config.rewrites.find(r=>r.source==='/'+page).destination,'/'+page+'/index.html');
 });
 
 test('runtime metadata never exposes auth tokens, query strings or private workspace data',()=>{
@@ -36,6 +36,7 @@ test('runtime metadata never exposes auth tokens, query strings or private works
  for(const path of ['/app?auth=register&email=private@example.test#reset=secret','/#verify=secret','/?demo=1','/demo']){
   const location=new URL(SITE_ORIGIN+path);assert.equal(pageAt(location),'app');applyMetadata(doc,location);assert.match(doc.querySelector('meta[name="robots"]').content,/noindex/);assert.equal(doc.querySelector('link[rel="canonical"]').href,SITE_ORIGIN+'/app');assert.equal(doc.getElementById('site-schema'),null);assert.doesNotMatch(doc.head.innerHTML,/private@example|secret|#verify=|#reset=/);
  }
+ applyMetadata(doc,new URL(SITE_ORIGIN+'/admin?email=private@example.test#secret'));assert.equal(pageAt(new URL(SITE_ORIGIN+'/admin')),'admin');assert.equal(doc.title,'Admin · Pentreeform');assert.match(doc.querySelector('meta[name="robots"]').content,/noindex/);assert.equal(doc.querySelector('link[rel="canonical"]').href,SITE_ORIGIN+'/admin');assert.equal(doc.getElementById('site-schema'),null);assert.doesNotMatch(doc.head.innerHTML,/private@example|#secret/);
  applyMetadata(doc,new URL(SITE_ORIGIN+'/support/?from=footer#privacy-requests'));assert.equal(doc.querySelector('link[rel="canonical"]').href,SITE_ORIGIN+'/support');assert.equal(doc.title,'Support · Pentreeform');assert.ok(doc.getElementById('site-schema'));
  applyMetadata(doc,new URL(SITE_ORIGIN+'/missing'));assert.match(doc.querySelector('meta[name="robots"]').content,/noindex/);assert.equal(doc.querySelector('link[rel="canonical"]'),null);dom.window.close();
 });

@@ -47,6 +47,14 @@
     {
       "source": "/support/",
       "destination": "/support/index.html"
+    },
+    {
+      "source": "/admin",
+      "destination": "/admin/index.html"
+    },
+    {
+      "source": "/admin/",
+      "destination": "/admin/index.html"
     }
   ],
   "headers": [
@@ -111,6 +119,32 @@
           "value": "noindex, nofollow"
         }
       ]
+    },
+    {
+      "source": "/admin",
+      "headers": [
+        {
+          "key": "X-Robots-Tag",
+          "value": "noindex, nofollow"
+        },
+        {
+          "key": "Cache-Control",
+          "value": "private, no-store"
+        }
+      ]
+    },
+    {
+      "source": "/admin/",
+      "headers": [
+        {
+          "key": "X-Robots-Tag",
+          "value": "noindex, nofollow"
+        },
+        {
+          "key": "Cache-Control",
+          "value": "private, no-store"
+        }
+      ]
     }
   ],
   "trailingSlash": false,
@@ -121,7 +155,7 @@
       "permanent": true
     },
     {
-      "source": "/:page(privacy|terms|support|app)/index.html",
+      "source": "/:page(privacy|terms|support|app|admin)/index.html",
       "destination": "/:page",
       "permanent": true
     },

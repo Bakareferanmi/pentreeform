@@ -15,7 +15,7 @@ try {
     Invoke-WebRequest -UseBasicParsing -Uri "https://github.com/Bakareferanmi/pentreeform/archive/$Revision.zip" -OutFile $archive
     Expand-Archive -LiteralPath $archive -DestinationPath $staging
     $source = Join-Path $staging "pentreeform-$Revision"
-    $directories = @('src', 'public', 'shared', 'worker', 'migrations', 'tests', 'docs')
+    $directories = @('src', 'public', 'shared', 'worker', 'migrations', 'tests', 'docs', 'scripts')
     $files = @('index.html', 'package.json', 'package-lock.json', 'vite.config.js')
     foreach ($entry in ($directories + $files)) {
         if (!(Test-Path (Join-Path $source $entry))) { throw "Downloaded source is missing $entry. No project files were updated." }

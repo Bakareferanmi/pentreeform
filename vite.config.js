@@ -6,7 +6,7 @@ export default defineConfig({
  plugins:[{
   name:'prerendered-preview-routes',
   configurePreviewServer(server){server.middlewares.use((request,response,next)=>{
-   const url=new URL(request.url,'http://preview'),page=/^\/(privacy|terms|support|app|demo)\/?$/.exec(url.pathname)?.[1];
+   const url=new URL(request.url,'http://preview'),page=/^\/(privacy|terms|support|app|demo|admin)\/?$/.exec(url.pathname)?.[1];
    if(page)request.url='/'+(page==='demo'?'app':page)+'/index.html'+url.search;
    next();
   })}

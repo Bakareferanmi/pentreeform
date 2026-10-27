@@ -16,8 +16,8 @@ const temporary=await mkdtemp(resolve(root,'.seo-build-'));
 try{
  await build({configFile:false,define:{__SITE_ORIGIN__:JSON.stringify(base)},build:{ssr:resolve('scripts/prerender-entry.jsx'),outDir:temporary,emptyOutDir:true,rollupOptions:{output:{entryFileNames:'render.mjs'}}},logLevel:'warn'});
  const {renderPage}=await import(pathToFileURL(resolve(temporary,'render.mjs')).href),template=await readFile(resolve(dist,'index.html'),'utf8');
- for(const path of [...PUBLIC_ROUTES,'/app']){
-  const page=path==='/'?'home':path.slice(1),body=page==='app'?'':renderPage(page);
+ for(const path of [...PUBLIC_ROUTES,'/app','/admin']){
+  const page=path==='/'?'home':path.slice(1),body=['app','admin'].includes(page)?'':renderPage(page);
   const html=template.replace(/<!--seo:start-->[\s\S]*?<!--seo:end-->/,headMarkup(page,base)).replace('<div id="root"></div>',`<div id="root" data-page="${page}"${body?' data-prerendered="true"':''}>${body}</div>`);
   const folder=path==='/'?dist:resolve(dist,page);await mkdir(folder,{recursive:true});await writeFile(resolve(folder,'index.html'),html);
  }

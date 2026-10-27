@@ -29,7 +29,7 @@ export async function challenge(req,env,value,expectedAction){
 async function authToken(env,u,kind){const value=token(),expires=now()+(kind==='verify'?86400:1800);const url=`${origin(env)}/#${kind}=${value}`;return [query(env,'DELETE FROM auth_tokens WHERE user_id=? AND kind=?',u.id,kind),query(env,'INSERT INTO auth_tokens(token_hash,user_id,kind,expires_at) VALUES(?,?,?,?)',await hash(value),u.id,kind,expires),job(env,{userId:u.id,recipient:u.email,kind,payload:{subject:kind==='verify'?'Verify your Pentreeform email':'Reset your Pentreeform password',text:`${kind==='verify'?'Verify your email':'Reset your password'} using this link:\n\n${url}\n\nThis link expires ${kind==='verify'?'in 24 hours':'in 30 minutes'}. If you did not request this, ignore this email.`}})]}
 export async function authRoute(req,env,path){
  if(path.startsWith('/api/auth/google/'))return googleRoute(req,env,path,authToken);
- if(path==='/api/auth/me'&&req.method==='GET'){const u=await account(req,env,false);return json({user:publicUser(u)})}
+ if(path==='/api/auth/me'&&req.method==='GET'){const u=await account(req,env,false);return json({user:publicUser(u,env)})}
  if(req.method!=='POST')fail(405,'Method not allowed.');
  const data=await readJSON(req,8192),ip=req.headers.get('CF-Connecting-IP')||'local';
  await rate(env,`auth:${ip}`,20,60);
