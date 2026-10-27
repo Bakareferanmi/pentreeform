@@ -136,11 +136,11 @@ npm run deploy
 
 `0002_google_auth.sql` creates the identity and short-lived flow tables. Apply it before using Google login. Local copies of the credentials belong in `.dev.vars`, never committed source.
 
-The button stays visible but disabled until both credentials are configured. Google signup also respects `REGISTRATION_OPEN`; Google login remains available to existing Google users when new registrations are closed. The demo button only displays a preview notice.
+The Google button appears on sign-in and signup once both credentials are configured. Google signup also respects `REGISTRATION_OPEN`; Google login remains available to existing Google users when new registrations are closed.
 
 Gmail and Google Workspace identities with verified email can activate immediately. Other Google email addresses still receive Pentreeform's local verification email before accepting form notifications; configure Resend for those accounts.
 
-An existing password account is **not automatically linked** because an email address matches. Those users should use the existing email/password sign-in or password reset. Explicit account linking is not included. An existing Google identity whose email changes is directed to support rather than silently changing notification recipients.
+An existing password account can use Google after one password confirmation. Apply `0005_google_account_linking.sql` before deploying this flow. After Google verifies the identity, a ten-minute, browser-bound request asks for the existing password. Confirmation connects Google to the same user ID, preserving its password, forms, messages, billing and verification state. Future logins can use either method. Requests expire, are single-use and rate-limited; password resets invalidate pending connections. Matching email text alone never links an account. An existing Google identity whose email changes is directed to support rather than silently changing notification recipients.
 
 Test new signup, returning login, cancelled consent, stale state, same-email password accounts, and logout on the deployed domain. Automated tests use signed fixture tokens and mocked Google endpoints; actual consent and Google Cloud configuration still need a live smoke test.
 

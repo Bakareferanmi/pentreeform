@@ -1,3 +1,3 @@
 export function publicPageAt(pathname){return /^\/(privacy|terms|support)\/?$/.exec(pathname)?.[1]||null}
 export function isLegacyWorkspaceLocation(location){const query=new URLSearchParams(location.search);return /^\/demo\/?$/.test(location.pathname)||query.get('demo')==='1'||query.get('view')==='workspace'||location.hash==='#demo'}
-export function isLandingLocation(location){return /^\/$/.test(location.pathname)&&!isLegacyWorkspaceLocation(location)&&!/^#(verify|reset|auth_error)=/.test(location.hash)&&!new URLSearchParams(location.search).has('auth')&&new URLSearchParams(location.search).get('billing')!=='return'}
+export function isLandingLocation(location){return /^\/$/.test(location.pathname)&&!isLegacyWorkspaceLocation(location)&&!/^#(verify|reset|auth_error|google_link)=/.test(location.hash)&&!new URLSearchParams(location.search).has('auth')&&new URLSearchParams(location.search).get('billing')!=='return'}
