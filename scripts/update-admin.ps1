@@ -18,9 +18,29 @@ if ($OwnerEmail.Length -gt 254 -or $OwnerEmail -notmatch '^[^\s@]+@[^\s@]+\.[^\s
 $escapedEmail = $OwnerEmail.Replace("'", "''")
 $sql = "SELECT id, name, email, verified FROM users WHERE lower(email)='$escapedEmail';"
 Write-Host 'Checking the owner account in your configured remote database...'
-$lookupOutput = & npx wrangler d1 execute pentreeform --remote --json --command $sql
-if ($LASTEXITCODE -ne 0) { throw 'Owner lookup failed. No source or secrets were changed.' }
-$lookup = ($lookupOutput -join "`n") | ConvertFrom-Json
+# Invoke the installed CLI directly. npm/npx adds another Windows command-shell
+# boundary, which can change quoting in SQL arguments containing spaces.
+$wranglerCli = Join-Path (Get-Location).Path 'node_modules\wrangler\bin\wrangler.js'
+if (!(Test-Path -LiteralPath $wranglerCli)) {
+    throw 'Wrangler is not installed in this folder. Run npm ci, then run this updater again.'
+}
+$lookupOutput = & node $wranglerCli d1 execute pentreeform --remote --json --command $sql
+$lookupExitCode = $LASTEXITCODE
+if ($lookupExitCode -ne 0) {
+    # --json can put diagnostic output on stdout. Do not hide it in a variable.
+    if ($lookupOutput) { Write-Host ($lookupOutput -join "`n") }
+    throw "Cloudflare owner lookup failed (exit $lookupExitCode). Check the error above. No source or secrets were changed."
+}
+try {
+    $lookup = ($lookupOutput -join "`n") | ConvertFrom-Json -ErrorAction Stop
+} catch {
+    if ($lookupOutput) { Write-Host ($lookupOutput -join "`n") }
+    throw 'Cloudflare did not return readable account JSON. Check the output above. No source or secrets were changed.'
+}
+if (@($lookup | Where-Object { $_.success -eq $false }).Count -gt 0) {
+    Write-Host ($lookupOutput -join "`n")
+    throw 'Cloudflare reported an unsuccessful account query. No source or secrets were changed.'
+}
 $accounts = @($lookup | ForEach-Object { $_.results })
 if ($accounts.Count -ne 1 -or $accounts[0].verified -ne 1 -or $accounts[0].id -notmatch '^[a-f0-9]{32}$') {
     throw 'Exactly one existing verified account must match. Sign up and verify your email first, then run this updater again.'

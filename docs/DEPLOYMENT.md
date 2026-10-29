@@ -228,3 +228,8 @@ To configure manually, retrieve only your verified account ID from D1 and run `n
 - Connection badges show configured bindings, not an independent provider health check. Dashboard refreshes once per minute while visible and displays the report timestamp. Local report timestamps use Lagos time, while daily series use UTC.
 
 Account activity dates and aggregate retention are described in the public privacy policy. Server authorization, migration preservation, retained counts, filters and safe account reports are covered by `tests/admin.test.js`; UI routing and denial handling are covered by `tests/admin-ui.cjs`. The Windows updater's native execution still requires the operator's authenticated Wrangler environment.
+
+
+The admin updater invokes the project's installed Wrangler CLI through Node for its owner lookup, keeping SQL away from npm's extra Windows command-shell boundary. Failed queries and malformed JSON print their captured output before stopping; no source, migrations, secrets or deployment are changed at that stage. If Cloudflare rejects a lookup, use that displayed error to diagnose authentication, permissions or the configured database. A generic lookup failure alone does not identify the cause.
+
+`npm run test:admin-updater` exercises the real PowerShell lookup section against a synthetic local CLI: SQL argument preservation, readable failures, invalid JSON and owner validation. It requires PowerShell (`powershell.exe` on Windows or `pwsh` elsewhere), or a `POWERSHELL_BIN` path; the tests skip when no runtime is installed. These tests do not contact Cloudflare or deploy anything.
